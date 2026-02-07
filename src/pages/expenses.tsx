@@ -8,8 +8,9 @@ import {
   ListItem,
   ListItemText,
   Stack,
+  Avatar,
 } from "@mui/material";
-import { Plus, DollarSign, Banknote } from "lucide-react";
+import { Plus, DollarSign, Banknote, TrendingUp, User } from "lucide-react";
 import { borderRadius, shadows } from "../theme/colors";
 import { useAppDispatch } from "../hooks/useAppDispatch";
 import { useSelector } from "react-redux";
@@ -24,6 +25,9 @@ import ExpensesTab from "../sestions/Expenses/ExpensesTab";
 import ActionExpenses from "../sestions/Expenses/action/action-expenses";
 import ExpensesDialog from "../sestions/Expenses/ExpensesDialog";
 import ExpensesInfo from "../sestions/Expenses/ExpensesInfo";
+import DashboardCardImproved from "../components/DashboardCard/DashboardCardImproved";
+import { getDashboard } from "../store/actions/dashboardActions";
+import { responsive } from "../theme/responsive";
 
 type TabPageProps = {
   activeTabIndex: number;
@@ -33,11 +37,33 @@ type TabPageProps = {
 export default function ExpensesView({ activeTabIndex, index }: TabPageProps) {
   const dispatch = useAppDispatch();
   const { activeExpenses, inActiveExpenses } = useSelector(
-    (state: RootState) => state.expenses
+    (state: RootState) => state.expenses,
   );
+  // ====================== Dashboard ======================
+  const { dashboard } = useSelector((state: RootState) => state.dashboard);
+  const { user } = useSelector((state: RootState) => state.auth);
 
   const [activeTab, setActiveTab] = useState(0);
   const [drawerOpen, setDrawerOpen] = useState<IExpenses | null>(null);
+
+  useEffect(() => {
+    if (activeTabIndex === index) {
+      dispatch(getDashboard());
+    }
+  }, [activeTabIndex, index]);
+
+  const balanceDollar = dashboard?.balance?.dollar ?? 0;
+  const balanceSum = dashboard?.balance?.sum ?? 0;
+
+  const getDisplayName = (fullName: string) => {
+    if (fullName.length > 20) {
+      const parts = fullName.split(" ");
+      if (parts.length > 1) {
+        return `${parts[0]} ${parts[parts.length - 1].charAt(0)}.`;
+      }
+    }
+    return fullName;
+  };
 
   const handleOpenDrawer = (expenses: IExpenses) => {
     setDrawerOpen(expenses);
@@ -62,62 +88,154 @@ export default function ExpensesView({ activeTabIndex, index }: TabPageProps) {
     return acc + exp.currencyDetails.sum;
   }, 0);
   return (
-    <Box 
+    <Box
       sx={{
         maxWidth: "1400px",
         mx: "auto",
         px: { xs: 1, sm: 2, md: 3 },
       }}
     >
-      <Box 
-        sx={{ 
-          display: "grid", 
-          gridTemplateColumns: { xs: "1fr 1fr", md: "repeat(2, 1fr)" }, 
-          gap: 2, 
-          mb: 3 
+      {/* User Greeting - Responsive */}
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          mb: 3,
+          gap: responsive.spacing.gap,
+          p: responsive.spacing.card,
+          bgcolor: "background.paper",
+          borderRadius: 3,
+          boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
         }}
       >
-        <Paper
+        <Avatar
           sx={{
-            p: 2.5,
-            background: "#2563eb",
-            borderRadius: borderRadius.lg,
-            color: "white",
-            boxShadow: shadows.colored("rgba(37, 99, 235, 0.15)"),
+            width: responsive.avatar.large,
+            height: responsive.avatar.large,
+            bgcolor: "primary.main",
+            fontSize: responsive.typography.h6,
+            fontWeight: 700,
           }}
         >
-          <Box display="flex" alignItems="center" gap={1} mb={1}>
-            <DollarSign size={24} />
-            <Typography variant="caption" sx={{ opacity: 0.9, fontSize: "0.75rem" }}>
-              Dollar
-            </Typography>
-          </Box>
-          <Typography variant="h5" fontWeight={700}>
-            {totalUSD?.toLocaleString()} $
+          <User size={responsive.icon.medium.xs} />
+        </Avatar>
+        <Box sx={{ minWidth: 0, flex: 1 }}>
+          <Typography
+            variant="h6"
+            fontWeight="bold"
+            color="text.primary"
+            sx={{
+              fontSize: responsive.typography.h6,
+              lineHeight: 1.2,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {getDisplayName(
+              `${user.firstname} ${user.lastname}`.trim() || "Foydalanuvchi",
+            )}
           </Typography>
-        </Paper>
-
-        <Paper
-          sx={{
-            p: 2.5,
-            background: "#0ea5e9",
-            borderRadius: borderRadius.lg,
-            color: "white",
-            boxShadow: shadows.colored("rgba(14, 165, 233, 0.15)"),
-          }}
-        >
-          <Box display="flex" alignItems="center" gap={1} mb={1}>
-            <Banknote size={24} />
-            <Typography variant="caption" sx={{ opacity: 0.9, fontSize: "0.75rem" }}>
-              So'm
-            </Typography>
-          </Box>
-          <Typography variant="h5" fontWeight={700}>
-            {totalUZS?.toLocaleString()}
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{
+              fontSize: responsive.typography.body2,
+              mt: 0.5,
+            }}
+          >
+            Xush kelibsiz!
           </Typography>
-        </Paper>
+        </Box>
       </Box>
+      
+      {/* option 2 */}
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: {
+            xs: "1fr", // mobile (Telegram)
+            sm: "repeat(1, 1fr)", // tablet
+            md: "repeat(1, 1fr)", // desktop
+          },
+          gap: { xs: 1.5, sm: 2 },
+          mb: 3,
+        }}
+      >
+        {/* BALANCE – main card */}
+        <DashboardCardImproved
+          title="Mening balansim"
+          total={`${balanceDollar} $`}
+          subtitle={`${balanceSum.toLocaleString()} so‘m`}
+          icon={<TrendingUp size={22} />}
+          color="success"
+        />
 
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr 1fr", md: "repeat(2, 1fr)" },
+            gap: 2,
+            mb: 3,
+          }}
+        >
+          {/* USD */}
+          <Paper
+            sx={{
+              p: { xs: 2, sm: 2.5 },
+              borderRadius: borderRadius.lg,
+              background: "linear-gradient(135deg, #2563eb, #1d4ed8)",
+              color: "white",
+              boxShadow: shadows.colored("rgba(37, 99, 235, 0.18)"),
+            }}
+          >
+            <Stack spacing={0.5}>
+              <Stack direction="row" alignItems="center" gap={1}>
+                <DollarSign size={20} />
+                <Typography fontSize={12} sx={{ opacity: 0.85 }}>
+                  Dollar
+                </Typography>
+              </Stack>
+
+              <Typography
+                fontSize={{ xs: 22, sm: 24 }}
+                fontWeight={800}
+                lineHeight={1.2}
+              >
+                {totalUSD?.toLocaleString()} $
+              </Typography>
+            </Stack>
+          </Paper>
+
+          {/* UZS */}
+          <Paper
+            sx={{
+              p: { xs: 2, sm: 2.5 },
+              borderRadius: borderRadius.lg,
+              background: "linear-gradient(135deg, #0ea5e9, #0284c7)",
+              color: "white",
+              boxShadow: shadows.colored("rgba(14, 165, 233, 0.18)"),
+            }}
+          >
+            <Stack spacing={0.5}>
+              <Stack direction="row" alignItems="center" gap={1}>
+                <Banknote size={20} />
+                <Typography fontSize={12} sx={{ opacity: 0.85 }}>
+                  So‘m
+                </Typography>
+              </Stack>
+
+              <Typography
+                fontSize={{ xs: 22, sm: 24 }}
+                fontWeight={800}
+                lineHeight={1.2}
+              >
+                {totalUZS?.toLocaleString()}
+              </Typography>
+            </Stack>
+          </Paper>
+        </Box>
+      </Box>
       <Box sx={{ display: "flex", gap: 2, mb: 3, flexWrap: "wrap" }}>
         <Button
           variant="contained"

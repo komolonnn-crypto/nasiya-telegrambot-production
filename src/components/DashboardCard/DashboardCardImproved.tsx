@@ -87,12 +87,12 @@ const DashboardCardImproved: FC<DashboardCardProps> = ({
             backdropFilter: "blur(10px)",
             "& svg": {
               fontSize: responsive.icon.medium,
-            }
+            },
           }}
         >
           {icon}
         </Box>
-        
+
         <Typography
           variant="body2"
           fontWeight={600}
@@ -107,7 +107,8 @@ const DashboardCardImproved: FC<DashboardCardProps> = ({
             overflow: "hidden",
             textOverflow: "ellipsis",
             whiteSpace: "nowrap",
-            maxWidth: { xs: "100px", sm: "120px", md: "none" }
+            // maxWidth: { xs: "100px", sm: "120px", md: "none" }
+            maxWidth: { xs: "150px", sm: "180px", md: "none" }
           }}
         >
           {title}
@@ -128,7 +129,7 @@ const DashboardCardImproved: FC<DashboardCardProps> = ({
         >
           {typeof total === "number" ? total.toLocaleString() : total}
         </Typography>
-        
+
         {subtitle && (
           <Typography
             variant="caption"

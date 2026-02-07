@@ -21,7 +21,7 @@ import {
   CreditCard,
   FileText,
   Calendar,
-  Wallet,
+  // Wallet,
 } from "lucide-react";
 
 import { useAppDispatch } from "../../hooks/useAppDispatch";

@@ -17,6 +17,8 @@ import {
   Clock,
   TrendingUp,
   AlertCircle,
+  DollarSign,
+  Banknote,
 } from "lucide-react";
 import ContractDebtorItem from "../components/ContractDebtorItem";
 import { IDebtorContract, ICustomer } from "../types/ICustomer";
@@ -29,6 +31,8 @@ import CustomerDialog from "../components/CustomerDialog/CustomerDialog";
 import { borderRadius, shadows } from "../theme/colors";
 import { useDebounce } from "../hooks/useDebounce";
 import dayjs from "../utils/dayjs-config";
+import DashboardCardImproved from "../components/DashboardCard/DashboardCardImproved";
+import { responsive } from "../theme/responsive";
 
 type TabPageProps = {
   activeTabIndex: number;
@@ -40,6 +44,8 @@ export default function DebtorsPage({ activeTabIndex, index }: TabPageProps) {
   const { customersDebtor, isLoading } = useSelector(
     (state: RootState) => state.customer,
   );
+  
+  console.log("customersDebtor", customersDebtor);
 
   const [selectedCustomer, setSelectedCustomer] = useState<ICustomer | null>(
     null,
@@ -47,6 +53,12 @@ export default function DebtorsPage({ activeTabIndex, index }: TabPageProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDate, setSelectedDate] = useState<string>("");
   const debouncedSearch = useDebounce(searchTerm, 300);
+  const { dashboard } = useSelector((state: RootState) => state.dashboard);
+  // const { user } = useSelector((state: RootState) => state.auth);
+
+  const todayDollar = dashboard?.today?.dollar ?? 0;
+  const todaySum = dashboard?.today?.sum ?? 0;
+  const todayCount = dashboard?.today?.count ?? 0;
 
   useEffect(() => {
     if (activeTabIndex === index) {
@@ -84,8 +96,9 @@ export default function DebtorsPage({ activeTabIndex, index }: TabPageProps) {
 
     filtered.forEach((contract) => {
       // nextPaymentDate'dan to'liq sana olish
-      const paymentDate =
-        contract.nextPaymentDate ? dayjs(contract.nextPaymentDate) : null;
+      const paymentDate = contract.nextPaymentDate
+        ? dayjs(contract.nextPaymentDate)
+        : null;
 
       if (!paymentDate || !paymentDate.isValid()) {
         overduePayments.push(contract);
@@ -114,10 +127,12 @@ export default function DebtorsPage({ activeTabIndex, index }: TabPageProps) {
 
     // Har bir guruhni sanasi bo'yicha tartiblash
     const sortByDate = (a: IDebtorContract, b: IDebtorContract) => {
-      const dateA =
-        a.nextPaymentDate ? dayjs(a.nextPaymentDate) : dayjs().add(100, "year");
-      const dateB =
-        b.nextPaymentDate ? dayjs(b.nextPaymentDate) : dayjs().add(100, "year");
+      const dateA = a.nextPaymentDate
+        ? dayjs(a.nextPaymentDate)
+        : dayjs().add(100, "year");
+      const dateB = b.nextPaymentDate
+        ? dayjs(b.nextPaymentDate)
+        : dayjs().add(100, "year");
       return dateA.diff(dateB);
     };
 
@@ -128,6 +143,8 @@ export default function DebtorsPage({ activeTabIndex, index }: TabPageProps) {
       total: filtered.length,
     };
   }, [customersDebtor, debouncedSearch]);
+  
+  console.log("groupedDebtors", groupedDebtors);
 
   const handleContractClick = (contract: IDebtorContract) => {
     // Mijozni CustomerDialog'da ochish uchun ICustomer formatiga o'tkazish
@@ -153,32 +170,69 @@ export default function DebtorsPage({ activeTabIndex, index }: TabPageProps) {
         maxWidth: "1400px",
         mx: "auto",
         px: { xs: 0, sm: 2, md: 3 },
-      }}>
-      <Box
-        sx={{
-          p: { xs: 2, sm: 2.5 },
-          mb: 3,
-          background: "#ef4444",
-          borderRadius: borderRadius.lg,
-          color: "white",
-          boxShadow: shadows.colored("rgba(235, 51, 73, 0.3)"),
-        }}>
-        <Box display="flex" alignItems="center" gap={1.5} mb={1}>
-          <AlertTriangle size={28} />
-          <Box>
-            <Typography
-              variant="caption"
-              sx={{ opacity: 0.9, fontSize: "0.75rem" }}>
-              Jami qarzdorlar
-            </Typography>
-            <Typography variant="h4" fontWeight={700}>
-              {groupedDebtors.total}
-            </Typography>
+      }}
+    >
+      <Box>
+        <Box
+          sx={{
+            p: { xs: 2, sm: 2.5 },
+            mb: 1,
+            background: "#ef4444",
+            borderRadius: borderRadius.lg,
+            color: "white",
+            boxShadow: shadows.colored("rgba(235, 51, 73, 0.3)"),
+          }}
+        >
+          <Box display="flex" alignItems="center" gap={1.5} mb={1}>
+            <AlertTriangle size={28} />
+            <Box>
+              <Typography
+                variant="caption"
+                sx={{ opacity: 0.9, fontSize: "0.75rem" }}
+              >
+                Jami qarzdorlar
+              </Typography>
+              <Typography variant="h4" fontWeight={700}>
+                {groupedDebtors.total}
+              </Typography>
+            </Box>
           </Box>
+          <Typography variant="body2" sx={{ opacity: 0.9 }}>
+            Kechikkan to'lovlar
+          </Typography>
         </Box>
-        <Typography variant="body2" sx={{ opacity: 0.9 }}>
-          Kechikkan to'lovlar
-        </Typography>
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: {
+              xs: "1fr", // Mobile: 1 ustun
+              sm: "1fr", // Small tablet: 1 ustun
+              md: "repeat(2, 1fr)", // Medium tablet: 2 ustun
+              lg: "repeat(2, 1fr)", // Large desktop: 3 ustun
+              xl: "repeat(auto-fit, minmax(300px, 1fr))", // XL: auto-fit
+            },
+            gap: responsive.spacing.gap,
+            mb: 3,
+          }}
+        >
+          {/* Today's Payments Dollar */}
+          <DashboardCardImproved
+            title="Bugungi to'lovlar ($)"
+            total={`${todayDollar} $`}
+            subtitle={`${todayCount} ta to'lov`}
+            icon={<DollarSign size={responsive.icon.medium.xs} />}
+            color="primary"
+          />
+
+          {/* Today's Payments UZS */}
+          <DashboardCardImproved
+            title="Bugungi to'lovlar (So'm)"
+            total={`${todaySum.toLocaleString()} UZS`}
+            subtitle={`${todayCount} ta to'lov`}
+            icon={<Banknote size={responsive.icon.medium.xs} />}
+            color="info"
+          />
+        </Box>
       </Box>
 
       <Paper
@@ -188,7 +242,8 @@ export default function DebtorsPage({ activeTabIndex, index }: TabPageProps) {
           borderRadius: borderRadius.lg,
           bgcolor: "white",
           boxShadow: shadows.md,
-        }}>
+        }}
+      >
         <Stack spacing={2}>
           <Box>
             <Box
@@ -197,7 +252,8 @@ export default function DebtorsPage({ activeTabIndex, index }: TabPageProps) {
                 alignItems: "center",
                 justifyContent: "space-between",
                 mb: 1.5,
-              }}>
+              }}
+            >
               <Typography
                 variant="subtitle2"
                 sx={{
@@ -207,7 +263,8 @@ export default function DebtorsPage({ activeTabIndex, index }: TabPageProps) {
                   color: "text.primary",
                   fontWeight: 600,
                   fontSize: "0.9rem",
-                }}>
+                }}
+              >
                 <Calendar size={18} />
                 Sana bo'yicha filter
               </Typography>
@@ -262,9 +319,9 @@ export default function DebtorsPage({ activeTabIndex, index }: TabPageProps) {
                 },
               }}
               helperText={
-                selectedDate ?
-                  `${dayjs(selectedDate).format("DD MMMM YYYY")} gacha bo'lgan kechikkan to'lovlar`
-                : "Bugungi kungacha barcha kechikkan to'lovlar"
+                selectedDate
+                  ? `${dayjs(selectedDate).format("DD MMMM YYYY")} gacha bo'lgan kechikkan to'lovlar`
+                  : "Bugungi kungacha barcha kechikkan to'lovlar"
               }
               FormHelperTextProps={{
                 sx: {
@@ -306,7 +363,7 @@ export default function DebtorsPage({ activeTabIndex, index }: TabPageProps) {
         </Stack>
       </Paper>
 
-      {groupedDebtors.total > 0 ?
+      {groupedDebtors.total > 0 ? (
         <Box>
           {/* 1. BUGUNGI TO'LOVLAR */}
           {groupedDebtors.today.length > 0 && (
@@ -320,7 +377,8 @@ export default function DebtorsPage({ activeTabIndex, index }: TabPageProps) {
                     "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
                   color: "white",
                   boxShadow: shadows.colored("rgba(102, 126, 234, 0.3)"),
-                }}>
+                }}
+              >
                 <Box display="flex" alignItems="center" gap={1.5}>
                   <Clock size={24} />
                   <Box>
@@ -357,7 +415,8 @@ export default function DebtorsPage({ activeTabIndex, index }: TabPageProps) {
                     "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
                   color: "white",
                   boxShadow: shadows.colored("rgba(240, 147, 251, 0.3)"),
-                }}>
+                }}
+              >
                 <Box display="flex" alignItems="center" gap={1.5}>
                   <TrendingUp size={24} />
                   <Box>
@@ -394,7 +453,8 @@ export default function DebtorsPage({ activeTabIndex, index }: TabPageProps) {
                     "linear-gradient(135deg, #fa709a 0%, #fee140 100%)",
                   color: "white",
                   boxShadow: shadows.colored("rgba(250, 112, 154, 0.3)"),
-                }}>
+                }}
+              >
                 <Box display="flex" alignItems="center" gap={1.5}>
                   <AlertCircle size={24} />
                   <Box>
@@ -419,23 +479,25 @@ export default function DebtorsPage({ activeTabIndex, index }: TabPageProps) {
             </Box>
           )}
         </Box>
-      : <Paper
+      ) : (
+        <Paper
           sx={{
             p: 3,
             textAlign: "center",
             borderRadius: borderRadius.lg,
             bgcolor: "grey.50",
-          }}>
+          }}
+        >
           <Typography variant="h6" color="text.secondary" gutterBottom>
             Qarzdor shartnomalar topilmadi
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-            {selectedDate ?
-              `${dayjs(selectedDate).format("DD MMMM YYYY")} sanasiga qadar qarzdor shartnomalar yo'q`
-            : "Bugungi kunga qadar qarzdor shartnomalar yo'q"}
+            {selectedDate
+              ? `${dayjs(selectedDate).format("DD MMMM YYYY")} sanasiga qadar qarzdor shartnomalar yo'q`
+              : "Bugungi kunga qadar qarzdor shartnomalar yo'q"}
           </Typography>
         </Paper>
-      }
+      )}
 
       <CustomerDialog
         open={!!selectedCustomer}
