@@ -21,7 +21,7 @@ import {
   CreditCard,
   FileText,
   Calendar,
-  Wallet,
+  // Wallet,
 } from "lucide-react";
 
 import { useAppDispatch } from "../../hooks/useAppDispatch";
@@ -71,10 +71,11 @@ const PaymentModal: FC<PaymentModalProps> = ({
   const [currencyCourse, setCurrencyCourse] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState<string>("dollar_cash"); // ✅ YANGI: To'lov usuli
+  // const [paymentMethod, setPaymentMethod] = useState<string>("dollar_cash"); // ✅ YANGI: To'lov usuli
+  // const [checkIfMethodSet, setCheckIfMethodSet] = useState(false);
+  // //  Tasdiqlashdan oldin to'lov usuli to'g'ri tanlanganini tekshirish
 
-  const [checkIfMethodSet, setCheckIfMethodSet] = useState(false);
-  //  Tasdiqlashdan oldin to'lov usuli to'g'ri tanlanganini tekshirish
+  const [paymentMethod, setPaymentMethod] = useState<string>("");
 
   const [nextPaymentDate, setNextPaymentDate] = useState<string>(() => {
     // Default: Ertaga, 10:00
@@ -156,14 +157,17 @@ const PaymentModal: FC<PaymentModalProps> = ({
       setLoading(false);
       return;
     }
-    
-    
-    if (!checkIfMethodSet) {
-      setError("To'lov usuli tanlanmadi. Iltimos, qayta urinib ko'ring."); // ✅ YANGI: To'lov usuli
+
+    // if (!checkIfMethodSet) {
+    //   setError("To'lov usuli tanlanmadi. Iltimos, qayta urinib ko'ring."); // ✅ YANGI: To'lov usuli
+    //   setLoading(false);
+    //   return;
+    // }
+    if (!paymentMethod) {
+      setError("To'lov usulini tanlang.");
       setLoading(false);
       return;
     }
-    
 
     if (isUnderpaid && !nextPaymentDate) {
       setError("Kam to'lov qilganda keyingi to'lov sanasini belgilang!");
@@ -448,7 +452,7 @@ const PaymentModal: FC<PaymentModalProps> = ({
           {/* ✅ YANGI: To'lov usuli tanlash */}
           <FormControl fullWidth>
             <InputLabel id="payment-method-label">To'lov usuli</InputLabel>
-            <Select
+            {/* <Select
               labelId="payment-method-label"
               id="payment-method-select"
               value={paymentMethod}
@@ -466,6 +470,19 @@ const PaymentModal: FC<PaymentModalProps> = ({
                 borderRadius: borderRadius.md,
               }}
             >
+              <MenuItem value="som_cash">So'm naqd</MenuItem>
+              <MenuItem value="som_card">So'm karta</MenuItem>
+              <MenuItem value="dollar_cash">Dollar naqd</MenuItem>
+              <MenuItem value="dollar_card_visa">Dollar karta (Visa)</MenuItem>
+            </Select> */}
+            <Select
+              value={paymentMethod}
+              onChange={(e) => setPaymentMethod(e.target.value)}
+              label="To'lov usuli"
+            >
+              <MenuItem value="">
+                <em>Tanlang</em>
+              </MenuItem>
               <MenuItem value="som_cash">So'm naqd</MenuItem>
               <MenuItem value="som_card">So'm karta</MenuItem>
               <MenuItem value="dollar_cash">Dollar naqd</MenuItem>
