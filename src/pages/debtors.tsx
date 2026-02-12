@@ -44,7 +44,7 @@ export default function DebtorsPage({ activeTabIndex, index }: TabPageProps) {
   const { customersDebtor, isLoading } = useSelector(
     (state: RootState) => state.customer,
   );
-  
+
   console.log("customersDebtor", customersDebtor);
 
   const [selectedCustomer, setSelectedCustomer] = useState<ICustomer | null>(
@@ -143,7 +143,7 @@ export default function DebtorsPage({ activeTabIndex, index }: TabPageProps) {
       total: filtered.length,
     };
   }, [customersDebtor, debouncedSearch]);
-  
+
   console.log("groupedDebtors", groupedDebtors);
 
   const handleContractClick = (contract: IDebtorContract) => {
