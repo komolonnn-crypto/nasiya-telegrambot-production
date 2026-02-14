@@ -25,7 +25,7 @@ const TabsLayout = () => {
 
   useEffect(() => {
     const currentIndex = tabRoutes.findIndex(
-      (tab) => location.pathname === tab.path
+      (tab) => location.pathname === tab.path,
     );
     if (currentIndex !== -1) {
       setTabIndex(currentIndex);
@@ -58,8 +58,7 @@ const TabsLayout = () => {
           pt: { xs: 0.5, sm: 1 },
           pb: { xs: 0.5, sm: 1 },
           boxShadow: "0 2px 8px rgba(0, 0, 0, 0.05)",
-        }}
-      >
+        }}>
         <Tabs
           value={tabIndex}
           onChange={handleTabChange}
@@ -81,20 +80,19 @@ const TabsLayout = () => {
               height: 3,
               borderRadius: "3px 3px 0 0",
             },
-          }}
-        >
+          }}>
           {tabRoutes.map((tab, idx) => {
             const Icon = tab.icon;
             const showBadge = tab.showBadge && unreadCount > 0;
-            
+
             return (
               <Tab
                 key={idx}
                 label={tab.label}
                 icon={
-                  showBadge ? (
-                    <Badge 
-                      badgeContent={unreadCount} 
+                  showBadge ?
+                    <Badge
+                      badgeContent={unreadCount}
                       color="error"
                       sx={{
                         "& .MuiBadge-badge": {
@@ -103,14 +101,11 @@ const TabsLayout = () => {
                           minWidth: { xs: 16, sm: 18 },
                           padding: "0 4px",
                           fontWeight: 700,
-                        }
-                      }}
-                    >
+                        },
+                      }}>
                       <Icon size={window.innerWidth < 768 ? 18 : 20} />
                     </Badge>
-                  ) : (
-                    <Icon size={window.innerWidth < 768 ? 18 : 20} />
-                  )
+                  : <Icon size={window.innerWidth < 768 ? 18 : 20} />
                 }
                 iconPosition="start"
                 sx={{
@@ -119,7 +114,7 @@ const TabsLayout = () => {
                   "& .MuiTab-iconWrapper": {
                     marginRight: { xs: 0.3, sm: 0.5 },
                     marginBottom: "0 !important",
-                  }
+                  },
                 }}
               />
             );
@@ -137,18 +132,20 @@ const TabsLayout = () => {
           onSlideChange={handleSwipe}
           mousewheel={true}
           keyboard={{ enabled: true }}
-          style={{ height: "100%" }}
-        >
+          style={{ height: "100%" }}>
           {tabRoutes.map((route, idx) => {
             const Component = route.component;
             return (
               <SwiperSlide
                 key={idx}
-                style={{ height: "auto", overflowY: "auto" }}
-              >
+                style={{ height: "auto", overflowY: "auto" }}>
                 <Box
                   sx={{
-                    height: { xs: "calc(100vh - 56px)", sm: "calc(100vh - 64px)", md: "calc(100vh - 80px)" },
+                    height: {
+                      xs: "calc(100vh - 56px)",
+                      sm: "calc(100vh - 64px)",
+                      md: "calc(100vh - 80px)",
+                    },
                     overflowY: "auto",
                     overflowX: "hidden",
                     py: { xs: 1, sm: 1.5, md: 2 },
@@ -165,8 +162,7 @@ const TabsLayout = () => {
                     "&::-webkit-scrollbar-track": {
                       backgroundColor: "transparent",
                     },
-                  }}
-                >
+                  }}>
                   <Component activeTabIndex={tabIndex} index={idx} />
                 </Box>
               </SwiperSlide>
