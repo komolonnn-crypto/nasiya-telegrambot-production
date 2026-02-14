@@ -108,7 +108,7 @@ const DashboardCardImproved: FC<DashboardCardProps> = ({
             textOverflow: "ellipsis",
             whiteSpace: "nowrap",
             // maxWidth: { xs: "100px", sm: "120px", md: "none" }
-            maxWidth: { xs: "150px", sm: "180px", md: "none" }
+            maxWidth: { xs: "100px", sm: "160px", md: "none" }
           }}
         >
           {title}
@@ -121,7 +121,7 @@ const DashboardCardImproved: FC<DashboardCardProps> = ({
           fontWeight="bold"
           sx={{
             mb: 0.5,
-            fontSize: responsive.typography.h4,
+            fontSize: { xs: "1rem", sm: "1.25rem", md: "1.5rem" },
             lineHeight: 1.2,
             wordBreak: "break-word",
             display: "block",

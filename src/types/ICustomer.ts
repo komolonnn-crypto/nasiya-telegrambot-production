@@ -93,4 +93,5 @@ export type IDebtorContract = {
   isPending?: boolean; // ✅ YANGI: Kassa kutayotgan to'lov bormi?
   hasPaidPayments?: boolean; // ✅ YANGI: To'langan to'lovlar bormi?
   nextPaymentStatus?: "PENDING" | "TODAY" | "UPCOMING" | "OVERDUE"; // ✅ YANGI: To'lov statusi
+  currency?: string; // ✅ YANGI: Pul birligi (USD, UZS, va hokazo)
 };

@@ -1,1 +1,1 @@
-export { default as TelegramAuth } from './TelegramAuth';
+export { default as TelegramAuth } from "./TelegramAuth";
