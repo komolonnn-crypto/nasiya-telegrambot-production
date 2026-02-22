@@ -33,8 +33,8 @@ const initialState: DashboardState = {
   isLoading: false,
 };
 
-const authSlice = createSlice({
-  name: "customer",
+const dashboardSlice = createSlice({
+  name: "dashboard",
   initialState,
   reducers: {
     setDashboard(state, action: PayloadAction<IDashboardData>) {
@@ -53,5 +53,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { setDashboard, start, success, failure } = authSlice.actions;
-export default authSlice.reducer;
+export const { setDashboard, start, success, failure } = dashboardSlice.actions;
+export default dashboardSlice.reducer;

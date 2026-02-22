@@ -63,7 +63,6 @@ const TelegramAuth: React.FC<TelegramAuthProps> = ({ onAuthSuccess }) => {
     } catch (error) {
       showError("Autentifikatsiya xatosi", "Xatolik");
       setAuthStep("need_phone");
-      console.log(error);
     } finally {
       setLoading(false);
     }

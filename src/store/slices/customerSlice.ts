@@ -34,7 +34,7 @@ const initialState: UserState = {
   isLoading: false,
 };
 
-const authSlice = createSlice({
+const customerSlice = createSlice({
   name: "customer",
   initialState,
   reducers: {
@@ -46,7 +46,7 @@ const authSlice = createSlice({
       state.isLoading = false;
       state.customersDebtor = action.payload;
     },
-    setCustomersPatment(state, action: PayloadAction<ICustomer[] | []>) {
+    setCustomersPayment(state, action: PayloadAction<ICustomer[] | []>) {
       state.isLoading = false;
       state.customersPayment = action.payload;
     },
@@ -81,12 +81,12 @@ const authSlice = createSlice({
 export const {
   setCustomers,
   setCustomersDebtor,
-  setCustomersPatment,
+  setCustomersPayment,
   setCustomerContracts,
   setCustomerData,
   setCustomerDetails,
   start,
   success,
   failure,
-} = authSlice.actions;
-export default authSlice.reducer;
+} = customerSlice.actions;
+export default customerSlice.reducer;

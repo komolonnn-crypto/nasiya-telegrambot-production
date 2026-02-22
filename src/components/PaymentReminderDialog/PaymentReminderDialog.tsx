@@ -67,14 +67,6 @@ const PaymentReminderDialog: FC<PaymentReminderDialogProps> = ({
     try {
       setLoading(true);
       
-      console.log("🔔 Setting reminder:", {
-        contractId,
-        targetMonth,
-        targetMonthType: typeof targetMonth,
-        reminderDate,
-        reminderDateType: typeof reminderDate
-      });
-      
       await setPaymentReminder({
         contractId,
         targetMonth,
@@ -90,12 +82,6 @@ const PaymentReminderDialog: FC<PaymentReminderDialogProps> = ({
       
       onClose();
     } catch (error: any) {
-      console.error("❌ Error setting reminder:", error);
-      console.error("Error details:", {
-        message: error?.message,
-        response: error?.response?.data,
-        status: error?.response?.status
-      });
       showError(
         error?.response?.data?.message || "Eslatma belgilashda xatolik",
         "Xatolik"
@@ -108,12 +94,6 @@ const PaymentReminderDialog: FC<PaymentReminderDialogProps> = ({
   const handleRemoveReminder = async () => {
     try {
       setLoading(true);
-      
-      console.log("🔕 Removing reminder:", {
-        contractId,
-        targetMonth,
-        targetMonthType: typeof targetMonth
-      });
       
       await removePaymentReminder({
         contractId,
@@ -128,12 +108,6 @@ const PaymentReminderDialog: FC<PaymentReminderDialogProps> = ({
       
       onClose();
     } catch (error: any) {
-      console.error("❌ Error removing reminder:", error);
-      console.error("Error details:", {
-        message: error?.message,
-        response: error?.response?.data,
-        status: error?.response?.status
-      });
       showError(
         error?.response?.data?.message || "Eslatma o'chirishda xatolik",
         "Xatolik"

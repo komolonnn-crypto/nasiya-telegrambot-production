@@ -19,8 +19,8 @@ const initialState: UserState = {
   isLoading: false,
 };
 
-const authSlice = createSlice({
-  name: "customer",
+const notesSlice = createSlice({
+  name: "notes",
   initialState,
   reducers: {
     setNotes(state, action: PayloadAction<INote[] | []>) {
@@ -39,5 +39,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { setNotes, start, success, failure } = authSlice.actions;
-export default authSlice.reducer;
+export const { setNotes, start, success, failure } = notesSlice.actions;
+export default notesSlice.reducer;
