@@ -139,7 +139,6 @@ const DialogHeaderImproved: FC<IProps> = ({
           iconOnly={true}
           onClick={() => {
             // TODO: Implement more actions
-            console.log("More actions clicked");
           }}
         />
       </Box>

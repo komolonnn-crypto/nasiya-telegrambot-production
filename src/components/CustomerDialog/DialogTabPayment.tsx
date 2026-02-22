@@ -41,21 +41,9 @@ const DialogTabPayment: FC<IProps> = ({ customerId }) => {
   const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
 
   useEffect(() => {
-    console.log("🔍 Fetching contracts for:", customerId);
     dispatch(getContract(customerId));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [customerId]);
-
-  // ✅ Response'ni kuzatish
-  useEffect(() => {
-    console.log("📦 customerContracts updated:", {
-      isNull: customerContracts === null,
-      isUndefined: customerContracts === undefined,
-      allContracts: customerContracts?.allContracts?.length,
-      paidContracts: customerContracts?.paidContracts?.length,
-      data: customerContracts,
-    });
-  }, [customerContracts]);
 
   useEffect(() => {
     if (selectedContract && customerContracts) {

@@ -23,8 +23,8 @@ const initialState: ExpensesuState = {
   expensesModal: { type: undefined, data: undefined },
 };
 
-const authSlice = createSlice({
-  name: "customer",
+const expensesSlice = createSlice({
+  name: "expenses",
   initialState,
   reducers: {
     setActiveExpenses(state, action: PayloadAction<IExpenses[] | []>) {
@@ -65,5 +65,5 @@ export const {
   start,
   success,
   failure,
-} = authSlice.actions;
-export default authSlice.reducer;
+} = expensesSlice.actions;
+export default expensesSlice.reducer;
