@@ -1,12 +1,10 @@
 // src/routes/tabRoutes.ts
 
-// import DailySummary from "../pages/dailySummary";
 import Clients from "../pages/clients";
 import Debtors from "../pages/debtors";
 import Expenses from "../pages/expenses";
 import Notifications from "../pages/notifications";
 
-// import { BarChart3, Users, AlertTriangle, Receipt, Bell } from "lucide-react";
 import { Users, AlertTriangle, Receipt, Bell } from "lucide-react";
 
 export const tabRoutes = [
@@ -16,7 +14,6 @@ export const tabRoutes = [
     icon: AlertTriangle,
     component: Debtors,
   },
-  // { path: "/summary", label: "Hisobot", icon: BarChart3, component: DailySummary },
   { path: "/clients", label: "Mijozlar", icon: Users, component: Clients },
   {
     path: "/expenses",
