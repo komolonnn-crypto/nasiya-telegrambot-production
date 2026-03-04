@@ -1,6 +1,6 @@
 import { useState, FC } from "react";
+
 import { Box } from "@mui/material";
-// import TimePickerModal from "../PaymentExtensionDialog";
 import { ICustomer } from "../../types/ICustomer";
 import DialogHeader from "./DialogHeader";
 import DialogTab from "./DialogTab";
@@ -18,13 +18,41 @@ const CustomerDetails: FC<{
   const [activeTab, setActiveTab] = useState(0);
 
   return (
-    <Box sx={{ py: 1, px: 0, width: "100%", maxWidth: "100%", m: 0 }}>
-      <Box sx={{ px: 1 }}>
+    <Box
+      sx={{
+        height: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        bgcolor: "#F8FAFC",
+        width: "100vw",
+      }}>
+      {/* ── Sticky top: header + tabs ── */}
+      <Box
+        sx={{
+          position: "sticky",
+          top: 0,
+          left: 0,
+          zIndex: 10,
+          bgcolor: "white",
+          borderBottom: "1px solid #F1F5F9",
+          boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
+          flexShrink: 0,
+        }}>
         <DialogHeader customer={customer} onClose={onClose} />
         <DialogTab activeTab={activeTab} setActiveTab={setActiveTab} />
       </Box>
 
-      <Box sx={{ width: "100%", maxWidth: "100%", px: 0 }}>
+      {/* ── Scrollable content ── */}
+      <Box
+        sx={{
+          flex: 1,
+          overflowY: "auto",
+          "&::-webkit-scrollbar": { width: "2px" },
+          "&::-webkit-scrollbar-thumb": {
+            bgcolor: "#CBD5E1",
+            borderRadius: "4px",
+          },
+        }}>
         {activeTab === 0 && <DialogTabPayment customerId={customer._id} />}
         {activeTab === 1 && <DialogTabCustomerInfo customerId={customer._id} />}
         {activeTab === 2 && <DialogTabNotes customerId={customer._id} />}

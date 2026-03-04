@@ -1,4 +1,3 @@
-// import React from "react";
 import { Dialog, Box } from "@mui/material";
 import CustomerDetails from "./CustomerDetails";
 import { ICustomer } from "../../types/ICustomer";
@@ -44,11 +43,12 @@ const CustomerDialog: React.FC<CustomerDialogProps> = ({
           left: "0 !important",
           right: "0 !important",
         },
-      }}
-    >
+      }}>
       <Box sx={{ width: "100%", maxWidth: "100%", p: 0, m: 0 }}>
         <ErrorBoundary>
-          {customer && <CustomerDetails customer={customer} onClose={onClose} />}
+          {customer && (
+            <CustomerDetails customer={customer} onClose={onClose} />
+          )}
         </ErrorBoundary>
       </Box>
     </Dialog>

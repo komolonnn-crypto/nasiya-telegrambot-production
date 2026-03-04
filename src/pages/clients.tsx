@@ -1,13 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
-import {
-  List,
-  Paper,
-  TextField,
-  Typography,
-  InputAdornment,
-  Box,
-} from "@mui/material";
-import { Search } from "lucide-react";
+
+import { TextField, Typography, InputAdornment, Box } from "@mui/material";
+import { Search, Users } from "lucide-react";
 import CustomerListItem from "../components/CustomerItem";
 import { ICustomer } from "../types/ICustomer";
 import { useAppDispatch } from "../hooks/useAppDispatch";
@@ -16,7 +10,6 @@ import { RootState } from "../store";
 import { getCustomers } from "../store/actions/customerActions";
 import Loader from "../components/Loader/Loader";
 import CustomerDialog from "../components/CustomerDialog/CustomerDialog";
-import { borderRadius, shadows } from "../theme/colors";
 import { useDebounce } from "../hooks/useDebounce";
 
 type TabPageProps = {
@@ -30,7 +23,7 @@ export default function AllClientsPage({
 }: TabPageProps) {
   const dispatch = useAppDispatch();
   const { customers, isLoading } = useSelector(
-    (state: RootState) => state.customer
+    (state: RootState) => state.customer,
   );
 
   const [selectedClient, setSelectedClient] = useState<ICustomer | null>(null);
@@ -53,66 +46,103 @@ export default function AllClientsPage({
     });
   }, [customers, debouncedSearch]);
 
-  const handleClientClick = (client: ICustomer) => {
-    setSelectedClient(client);
-  };
+  const handleClientClick = (client: ICustomer) => setSelectedClient(client);
+  const handleCloseDetails = () => setSelectedClient(null);
 
-  const handleCloseDetails = () => {
-    setSelectedClient(null);
-  };
-
-  if (customers.length === 0 && isLoading) {
-    return <Loader />;
-  }
+  if (customers.length === 0 && isLoading) return <Loader />;
 
   return (
-    <Box
-      sx={{
-        maxWidth: "1400px",
-        mx: "auto",
-        px: { xs: 0, sm: 2, md: 3 },
-      }}
-    >
-      <Paper
-        elevation={0}
+    <Box sx={{ px: { xs: 1.5, sm: 2 }, pb: 4, maxWidth: 600, mx: "auto" }}>
+      {/* Header */}
+      <Box
         sx={{
-          p: { xs: 2, sm: 2.5 },
-          mb: 3,
-          borderRadius: borderRadius.lg,
+          display: "flex",
+          alignItems: "center",
+          gap: 1.5,
+          mb: 2,
+          px: 0.5,
+        }}>
+        <Box
+          sx={{
+            width: 45,
+            height: 45,
+            borderRadius: "20px",
+            bgcolor: "#EEF2FF",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "#4F46E5",
+            flexShrink: 0,
+          }}>
+          <Users size={20} />
+        </Box>
+        <Box>
+          <Typography
+            sx={{
+              fontSize: "1rem",
+              fontWeight: 700,
+              color: "#1E293B",
+              lineHeight: 1.5,
+            }}>
+            Mijozlar
+          </Typography>
+          <Typography
+            sx={{ fontSize: "0.80rem", color: "black", fontWeight: 500 }}>
+            Jami: {customers.length} ta mijoz
+          </Typography>
+        </Box>
+      </Box>
+
+      {/* Search */}
+      <Box
+        sx={{
           bgcolor: "white",
-          boxShadow: shadows.md,
+          borderRadius: "14px",
+          p: 1.5,
+          mb: 2,
+          boxShadow: "0 1px 4px rgba(0,0,0,0.07)",
+          border: "1px solid rgba(0,0,0,0.05)",
           position: "sticky",
           top: 0,
           zIndex: 10,
-        }}
-      >
+        }}>
         <TextField
           fullWidth
-          placeholder="Mijozlarni izlash..."
+          placeholder={`${customers.length} ta mijoz ichidan qidiring...`}
           variant="outlined"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          size="medium"
+          size="small"
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <Search size={20} color="#667eea" />
+                <Search size={16} color="#94A3B8" />
               </InputAdornment>
             ),
             sx: {
-              borderRadius: borderRadius.md,
-              bgcolor: "grey.50",
-              "& fieldset": { border: "none" },
-              "&:hover": {
-                bgcolor: "grey.100",
+              borderRadius: "10px",
+              bgcolor: "#F8FAFC",
+              fontSize: "0.875rem",
+              "& fieldset": { border: "1.5px solid #E2E8F0" },
+              "&:hover fieldset": { borderColor: "#4F46E5" },
+              "&.Mui-focused fieldset": {
+                borderColor: "#4F46E5",
+                borderWidth: "1.5px",
               },
             },
           }}
         />
-      </Paper>
+        {searchTerm && (
+          <Typography
+            sx={{ fontSize: "0.68rem", color: "#64748B", mt: 0.75, px: 0.5 }}>
+            {filteredClients.length} ta natija topildi
+          </Typography>
+        )}
+      </Box>
 
-      {filteredClients.length > 0 ? (
-        <List disablePadding>
+      {/* List */}
+      {filteredClients.length > 0 ?
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 0 }}>
           {filteredClients.map((customer) => (
             <CustomerListItem
               key={customer._id}
@@ -120,12 +150,46 @@ export default function AllClientsPage({
               onClick={handleClientClick}
             />
           ))}
-        </List>
-      ) : (
-        <Typography textAlign="center" color="text.secondary" mt={4}>
-          Mijozlar topilmadi.
-        </Typography>
-      )}
+        </Box>
+      : <Box
+          sx={{
+            textAlign: "center",
+            py: 7,
+            px: 3,
+            bgcolor: "white",
+            borderRadius: "16px",
+            border: "1px solid #E2E8F0",
+          }}>
+          <Box
+            sx={{
+              width: 60,
+              height: 60,
+              borderRadius: "50%",
+              bgcolor: "#F1F5F9",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              mx: "auto",
+              mb: 2,
+            }}>
+            <Users size={28} color="#CBD5E1" />
+          </Box>
+          <Typography
+            sx={{
+              fontSize: "0.9rem",
+              fontWeight: 600,
+              color: "#475569",
+              mb: 0.5,
+            }}>
+            {searchTerm ? "Mijoz topilmadi" : "Mijozlar yo'q"}
+          </Typography>
+          <Typography sx={{ fontSize: "0.78rem", color: "#94A3B8" }}>
+            {searchTerm ?
+              `"${searchTerm}" bo'yicha hech narsa topilmadi`
+            : "Hali birorta mijoz qo'shilmagan"}
+          </Typography>
+        </Box>
+      }
 
       <CustomerDialog
         open={!!selectedClient}
