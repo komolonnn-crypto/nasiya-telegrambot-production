@@ -21,13 +21,21 @@ const DashboardCardImproved: FC<DashboardCardProps> = ({
   color = "primary",
   subtitle,
 }) => {
-  const validColors = ["primary", "success", "error", "info", "warning"] as const;
-  type ValidColor = typeof validColors[number];
+  const validColors = [
+    "primary",
+    "success",
+    "error",
+    "info",
+    "warning",
+  ] as const;
+  type ValidColor = (typeof validColors)[number];
   const themeColor = colors[color as ValidColor];
 
   // Smart text truncation for mobile
   const truncateText = (text: string, maxLength: number) => {
-    return text.length > maxLength ? `${text.substring(0, maxLength)}...` : text;
+    return text.length > maxLength ?
+        `${text.substring(0, maxLength)}...`
+      : text;
   };
 
   return (
@@ -52,8 +60,7 @@ const DashboardCardImproved: FC<DashboardCardProps> = ({
         "&:hover": {
           boxShadow: shadows.xl,
         },
-      }}
-    >
+      }}>
       <Box
         sx={{
           position: "absolute",
@@ -74,8 +81,7 @@ const DashboardCardImproved: FC<DashboardCardProps> = ({
           gap: { xs: 1, md: 1.5 },
           position: "relative",
           zIndex: 1,
-        }}
-      >
+        }}>
         <Box
           sx={{
             p: { xs: 1, md: 1.5 },
@@ -88,8 +94,7 @@ const DashboardCardImproved: FC<DashboardCardProps> = ({
             "& svg": {
               fontSize: responsive.icon.medium,
             },
-          }}
-        >
+          }}>
           {icon}
         </Box>
 
@@ -108,9 +113,8 @@ const DashboardCardImproved: FC<DashboardCardProps> = ({
             textOverflow: "ellipsis",
             whiteSpace: "nowrap",
             // maxWidth: { xs: "100px", sm: "120px", md: "none" }
-            maxWidth: { xs: "100px", sm: "160px", md: "none" }
-          }}
-        >
+            maxWidth: { xs: "100px", sm: "160px", md: "none" },
+          }}>
           {title}
         </Typography>
       </Box>
@@ -125,8 +129,7 @@ const DashboardCardImproved: FC<DashboardCardProps> = ({
             lineHeight: 1.2,
             wordBreak: "break-word",
             display: "block",
-          }}
-        >
+          }}>
           {typeof total === "number" ? total.toLocaleString() : total}
         </Typography>
 
@@ -140,8 +143,7 @@ const DashboardCardImproved: FC<DashboardCardProps> = ({
               overflow: "hidden",
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
-            }}
-          >
+            }}>
             {window.innerWidth < 600 ? truncateText(subtitle, 15) : subtitle}
           </Typography>
         )}

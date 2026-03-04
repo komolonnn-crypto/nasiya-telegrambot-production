@@ -1,4 +1,3 @@
-
 export interface MockUser {
   _id: string;
   telegramId: string;
@@ -61,10 +60,9 @@ export const getDefaultMockUserOrFirst = (): MockUser => {
   return getDefaultMockUser() || MOCK_USERS[0];
 };
 
-
 export const isDevelopment = () => {
   return (
-    import.meta.env.DEV || 
+    import.meta.env.DEV ||
     window.location.hostname === "localhost" ||
     window.location.hostname === "127.0.0.1"
   );
@@ -72,10 +70,10 @@ export const isDevelopment = () => {
 
 export const getMockUser = (): MockUser | null => {
   if (!isDevelopment()) return null;
-  
+
   const mockUserStr = localStorage.getItem("mockUser");
   if (!mockUserStr) return null;
-  
+
   try {
     return JSON.parse(mockUserStr);
   } catch {
@@ -85,7 +83,7 @@ export const getMockUser = (): MockUser | null => {
 
 export const setMockUser = (user: MockUser | null) => {
   if (!isDevelopment()) return;
-  
+
   if (user) {
     localStorage.setItem("mockUser", JSON.stringify(user));
     localStorage.setItem("token", `mock_token_${user._id}`);
@@ -94,7 +92,6 @@ export const setMockUser = (user: MockUser | null) => {
     localStorage.removeItem("token");
   }
 };
-
 
 export const isMockMode = (): boolean => {
   return isDevelopment() && !!getMockUser();

@@ -6,8 +6,7 @@ const Loader = () => (
     alignItems="center"
     justifyContent="center"
     flex="1 1 auto"
-    height="100vh"
-  >
+    height="100vh">
     <CircularProgress size="25vw" />
   </Box>
 );
