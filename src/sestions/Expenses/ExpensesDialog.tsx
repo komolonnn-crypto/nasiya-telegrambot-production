@@ -1,3 +1,5 @@
+import { useCallback, useEffect, useState } from "react";
+
 import {
   Box,
   Dialog,
@@ -5,9 +7,11 @@ import {
   TextField,
   Button,
   InputAdornment,
+  DialogActions,
 } from "@mui/material";
-import { useCallback, useEffect, useState } from "react";
-import { X, DollarSign, Banknote, FileText, Plus, Edit2 } from "lucide-react";
+
+import { CreditCard } from "lucide-react";
+
 import { useAppDispatch } from "../../hooks/useAppDispatch";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store";
@@ -70,17 +74,24 @@ const ExpensesDialog = () => {
       formValues.currencyDetails.sum > 0) &&
     formValues.notes.trim() !== "";
 
+  // Shared outlined field style — rasmdagidek
   const fieldSx = {
     "& .MuiOutlinedInput-root": {
-      borderRadius: "10px",
+      borderRadius: "12px",
       bgcolor: "white",
-      fontSize: "0.875rem",
-      "& fieldset": { borderColor: "#E2E8F0" },
-      "&:hover fieldset": { borderColor: "#4F46E5" },
-      "&.Mui-focused fieldset": { borderColor: "#4F46E5", borderWidth: "1.5px" },
+      fontSize: "1rem",
+      "& fieldset": { borderColor: "#E2E8F0", borderWidth: "1.5px" },
+      "&:hover fieldset": { borderColor: "#CBD5E1" },
+      "&.Mui-focused fieldset": {
+        borderColor: "#2563EB",
+        borderWidth: "1.5px",
+      },
     },
-    "& .MuiInputLabel-root": { fontSize: "0.875rem" },
-    "& .MuiInputLabel-root.Mui-focused": { color: "#4F46E5" },
+    "& .MuiInputLabel-root": {
+      fontSize: "0.9rem",
+      color: "#94A3B8",
+    },
+    "& .MuiInputLabel-root.Mui-focused": { color: "#2563EB" },
   };
 
   return (
@@ -92,115 +103,118 @@ const ExpensesDialog = () => {
       PaperProps={{
         sx: {
           borderRadius: "20px",
-          overflow: "hidden",
           m: 2,
-          boxShadow: "0 20px 60px rgba(0,0,0,0.15)",
-        },
-      }}
-    >
-      {/* Header */}
-      <Box
-        sx={{
-          px: 2.5,
-          py: 2,
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          borderBottom: "1px solid #F1F5F9",
           bgcolor: "white",
-        }}
-      >
-        <Box display="flex" alignItems="center" gap={1.25}>
-          <Box
+          boxShadow: "0 20px 60px rgba(0,0,0,0.18)",
+          overflow: "hidden",
+        },
+      }}>
+      {/* ── Header — xuddi rasmdagidek ── */}
+      <Box sx={{ px: 3, pt: 3, pb: 2.5 }}>
+        <Box display="flex" alignItems="center" gap={1.5}>
+          <CreditCard size={26} color="#1E293B" strokeWidth={2} />
+          <Typography
             sx={{
-              width: 38,
-              height: 38,
-              borderRadius: "11px",
-              bgcolor: "#EEF2FF",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            {isEdit ? <Edit2 size={18} color="#4F46E5" /> : <Plus size={18} color="#4F46E5" />}
-          </Box>
-          <Box>
-            <Typography sx={{ fontSize: "0.9rem", fontWeight: 700, color: "#1E293B" }}>
-              {isEdit ? "Xarajatni tahrirlash" : "Yangi xarajat"}
-            </Typography>
-            <Typography sx={{ fontSize: "0.68rem", color: "#94A3B8" }}>
-              {isEdit ? "Ma'lumotlarni yangilang" : "Xarajat ma'lumotlarini kiriting"}
-            </Typography>
-          </Box>
-        </Box>
-        <Box
-          onClick={handleClose}
-          sx={{
-            width: 32,
-            height: 32,
-            borderRadius: "50%",
-            bgcolor: "#F1F5F9",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            cursor: "pointer",
-            "&:hover": { bgcolor: "#E2E8F0" },
-          }}
-        >
-          <X size={16} color="#64748B" />
+              fontSize: "1.4rem",
+              fontWeight: 800,
+              color: "#1E293B",
+              letterSpacing: "-0.01em",
+            }}>
+            {isEdit ? "Xarajatni tahrirlash" : "To'lov ma'lumotlari"}
+          </Typography>
         </Box>
       </Box>
 
-      {/* Form */}
-      <Box sx={{ p: 2.5, bgcolor: "#F8FAFC", display: "flex", flexDirection: "column", gap: 1.5 }}>
+      {/* ── Form ── */}
+      <Box
+        sx={{
+          px: 3,
+          pb: 1,
+          display: "flex",
+          flexDirection: "column",
+          gap: 2,
+          bgcolor: "white",
+        }}>
+        {/* Dollar field */}
         <TextField
-          label="Dollar miqdori"
+          label="Miqdor Dollar"
           fullWidth
-          size="small"
           value={formatNumber(formValues.currencyDetails.dollar)}
           onChange={(e) => {
             const value = e.target.value.replace(/\D/g, "");
             setFormValues((prev) => ({
               ...prev,
-              currencyDetails: { ...prev.currencyDetails, dollar: Number(value) },
+              currencyDetails: {
+                ...prev.currencyDetails,
+                dollar: Number(value),
+              },
             }));
           }}
           InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <DollarSign size={16} color="#4F46E5" />
-              </InputAdornment>
-            ),
             endAdornment: (
               <InputAdornment position="end">
-                <Typography sx={{ fontSize: "0.8rem", fontWeight: 700, color: "#94A3B8" }}>$</Typography>
+                {/* Rasmdagidek kulrang doira badge */}
+                <Box
+                  sx={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: "50%",
+                    bgcolor: "#F1F5F9",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}>
+                  <Typography
+                    sx={{
+                      fontSize: "1rem",
+                      fontWeight: 700,
+                      color: "#64748B",
+                    }}>
+                    $
+                  </Typography>
+                </Box>
               </InputAdornment>
             ),
           }}
           sx={fieldSx}
         />
 
+        {/* So'm field */}
         <TextField
-          label="So'm miqdori"
+          label={`Miqdor (${formatNumber(formValues.currencyDetails.sum)})`}
           fullWidth
-          size="small"
           value={formatNumber(formValues.currencyDetails.sum)}
           onChange={(e) => {
             const value = e.target.value.replace(/\D/g, "");
             setFormValues((prev) => ({
               ...prev,
-              currencyDetails: { ...prev.currencyDetails, sum: Number(value) },
+              currencyDetails: {
+                ...prev.currencyDetails,
+                sum: Number(value),
+              },
             }));
           }}
           InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <Banknote size={16} color="#10B981" />
-              </InputAdornment>
-            ),
             endAdornment: (
               <InputAdornment position="end">
-                <Typography sx={{ fontSize: "0.8rem", fontWeight: 700, color: "#94A3B8" }}>UZS</Typography>
+                <Box
+                  sx={{
+                    px: 1.5,
+                    py: 0.5,
+                    borderRadius: "20px",
+                    bgcolor: "#F1F5F9",
+                    display: "flex",
+                    alignItems: "center",
+                  }}>
+                  <Typography
+                    sx={{
+                      fontSize: "0.85rem",
+                      fontWeight: 700,
+                      color: "#64748B",
+                    }}>
+                    so'm
+                  </Typography>
+                </Box>
               </InputAdornment>
             ),
           }}
@@ -208,72 +222,40 @@ const ExpensesDialog = () => {
         />
 
         <TextField
-          label="Izoh"
+          placeholder="Izoh"
           fullWidth
-          size="small"
           multiline
-          rows={3}
+          rows={4}
           value={formValues.notes}
           onChange={(e) =>
             setFormValues((prev) => ({ ...prev, notes: e.target.value }))
           }
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start" sx={{ alignSelf: "flex-start", mt: 1.25 }}>
-                <FileText size={16} color="#94A3B8" />
-              </InputAdornment>
-            ),
+          sx={{
+            ...fieldSx,
+            "& .MuiOutlinedInput-root": {
+              ...fieldSx["& .MuiOutlinedInput-root"],
+              alignItems: "flex-start",
+              pt: 1.5,
+            },
+            "& ::placeholder": {
+              color: "#94A3B8",
+              fontSize: "0.95rem",
+            },
           }}
-          sx={fieldSx}
         />
       </Box>
 
-      {/* Actions */}
-      <Box
-        sx={{
-          px: 2.5,
-          py: 2,
-          display: "flex",
-          gap: 1.5,
-          borderTop: "1px solid #F1F5F9",
-          bgcolor: "white",
-        }}
-      >
-        <Button
-          onClick={handleClose}
-          fullWidth
-          variant="outlined"
-          sx={{
-            borderRadius: "10px",
-            py: 1.1,
-            fontSize: "0.875rem",
-            fontWeight: 600,
-            borderColor: "#E2E8F0",
-            color: "#64748B",
-            "&:hover": { borderColor: "#CBD5E1", bgcolor: "#F8FAFC" },
-          }}
-        >
+      <DialogActions>
+        <Button onClick={handleClose} variant="text">
           Bekor qilish
         </Button>
         <Button
           onClick={handleSubmit}
-          disabled={!isDisabled}
-          fullWidth
           variant="contained"
-          sx={{
-            borderRadius: "10px",
-            py: 1.1,
-            fontSize: "0.875rem",
-            fontWeight: 700,
-            bgcolor: "#4F46E5",
-            "&:hover": { bgcolor: "#4338CA" },
-            "&.Mui-disabled": { bgcolor: "#E2E8F0", color: "#94A3B8" },
-            boxShadow: "0 2px 8px rgba(79,70,229,0.3)",
-          }}
-        >
-          {isEdit ? "Yangilash" : "Saqlash"}
+          disabled={!isDisabled}>
+          Saqlash
         </Button>
-      </Box>
+      </DialogActions>
     </Dialog>
   );
 };

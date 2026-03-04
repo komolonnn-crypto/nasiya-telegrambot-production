@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
+import { motion } from "framer-motion";
 
 import {
   TextField,
@@ -6,8 +7,6 @@ import {
   InputAdornment,
   Box,
   Chip,
-  ToggleButtonGroup,
-  ToggleButton,
 } from "@mui/material";
 
 import {
@@ -35,6 +34,9 @@ import Loader from "../components/Loader/Loader";
 import CustomerDialog from "../components/CustomerDialog/CustomerDialog";
 import { useDebounce } from "../hooks/useDebounce";
 import dayjs from "../utils/dayjs-config";
+import DashboardCardImproved from "../components/DashboardCard/DashboardCardImproved";
+import { responsive } from "../theme/responsive";
+import { borderRadius, shadows } from "../theme/colors";
 
 type TabPageProps = {
   activeTabIndex: number;
@@ -42,70 +44,6 @@ type TabPageProps = {
 };
 
 type FilterType = "all" | "overdue" | "pending";
-
-// ─── Mini stat card ───────────────────────────────────────────────────────────
-function StatCard({
-  icon,
-  label,
-  value,
-  color,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string | number;
-  color: string;
-}) {
-  return (
-    <Box
-      sx={{
-        flex: 1,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        gap: 0.5,
-        py: 1.25,
-        px: 0.75,
-        bgcolor: "white",
-        borderRadius: "14px",
-        boxShadow: "0 1px 4px rgba(0,0,0,0.07)",
-        border: "1px solid rgba(0,0,0,0.05)",
-      }}>
-      <Box
-        sx={{
-          width: 40,
-          height: 40,
-          borderRadius: "20px",
-          bgcolor: `${color}15`,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          color: color,
-        }}>
-        {icon}
-      </Box>
-      <Typography
-        sx={{
-          fontSize: "0.65rem",
-          color: "#94A3B8",
-          fontWeight: 500,
-          textAlign: "center",
-          lineHeight: 1.5,
-        }}>
-        {label}
-      </Typography>
-      <Typography
-        sx={{
-          fontSize: "0.85rem",
-          fontWeight: 800,
-          color: "#1E293B",
-          textAlign: "center",
-          lineHeight: 1.1,
-        }}>
-        {value}
-      </Typography>
-    </Box>
-  );
-}
 
 // ─── Section header ───────────────────────────────────────────────────────────
 function SectionHeader({
@@ -304,26 +242,59 @@ export default function DebtorsPage({ activeTabIndex, index }: TabPageProps) {
 
   return (
     <Box sx={{ px: { xs: 1.5, sm: 2 }, pb: 4, maxWidth: 600, mx: "auto" }}>
-      {/* ── Stat cards ── */}
-      <Box sx={{ display: "flex", gap: 1.5, mb: 1.5 }}>
-        <StatCard
-          icon={<AlertTriangle size={20} />}
-          label="Jami qarzdor"
-          value={groupedDebtors.allTotal}
-          color="#EF4444"
-        />
-        <StatCard
-          icon={<DollarSign size={20} />}
-          label={`Bugun (${todayCount} ta)`}
-          value={`${todayDollar}$`}
-          color="#4F46E5"
-        />
-        <StatCard
-          icon={<Banknote size={20} />}
-          label="Bugun UZS"
-          value={todaySum > 0 ? `${(todaySum / 1_000_000).toFixed(1)}M` : "0"}
-          color="#0EA5E9"
-        />
+      <Box>
+        <Box
+          sx={{
+            p: { xs: 2, sm: 2.5 },
+            mb: 1,
+            background: "#ef4444",
+            borderRadius: borderRadius.xl,
+            color: "white",
+            boxShadow: shadows.colored("rgba(235, 51, 73, 0.3)"),
+          }}>
+          <Box display="flex" alignItems="center" gap={1.5} mb={1}>
+            <AlertTriangle size={30} />
+            <Box>
+              <Typography
+                variant="caption"
+                sx={{ opacity: 2, fontSize: "0.75rem" }}>
+                Jami qarzdorlar
+              </Typography>
+              <Typography variant="h4" fontWeight={700}>
+                {groupedDebtors.allTotal}
+              </Typography>
+            </Box>
+          </Box>
+          <Typography variant="body2" sx={{ opacity: 2 }}>
+            Kechikkan to'lovlar
+          </Typography>
+        </Box>
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: {
+              xs: "1fr 1fr",
+              md: "repeat(2, 1fr)",
+            },
+            gap: responsive.spacing.gap,
+            mb: 3,
+          }}>
+          <DashboardCardImproved
+            title="Bugungi to'lovlar ($)"
+            total={`${todayDollar} $`}
+            subtitle={`${todayCount} ta to'lov`}
+            icon={<DollarSign size={responsive.icon.medium.xs} />}
+            color="primary"
+          />
+
+          <DashboardCardImproved
+            title="Bugungi to'lovlar (So'm)"
+            total={`${todaySum.toLocaleString()} UZS`}
+            subtitle={`${todayCount} ta to'lov`}
+            icon={<Banknote size={responsive.icon.medium.xs} />}
+            color="info"
+          />
+        </Box>
       </Box>
 
       {/* ── Filters ── */}
@@ -336,52 +307,107 @@ export default function DebtorsPage({ activeTabIndex, index }: TabPageProps) {
           boxShadow: "0 1px 4px rgba(0,0,0,0.07)",
           border: "1px solid rgba(0,0,0,0.05)",
         }}>
-        {/* Type filter */}
-        <ToggleButtonGroup
-          value={filterType}
-          exclusive
-          onChange={(_, v) => {
-            if (v !== null) setFilterType(v);
-          }}
-          fullWidth
-          size="small"
+        {/* ── Type filter — rasmdagidek ko'k pill tabs ── */}
+        <Box
           sx={{
+            display: "flex",
+            gap: "4px",
             mb: 1.5,
             bgcolor: "#F1F5F9",
-            borderRadius: "10px",
-            p: 0.4,
-            gap: 0.4,
-            "& .MuiToggleButton-root": {
-              flex: 1,
-              py: 0.75,
-              fontSize: "0.72rem",
-              fontWeight: 600,
-              textTransform: "none",
-              border: "none !important",
-              borderRadius: "8px !important",
-              color: "#64748B",
-              transition: "all 0.2s",
-              gap: 0.5,
-              "&.Mui-selected": {
-                bgcolor: "white",
-                color: "#4F46E5",
-                boxShadow: "0 1px 4px rgba(0,0,0,0.1)",
-              },
-            },
+            borderRadius: "12px",
+            p: "4px",
+            overflowX: "auto",
+            "&::-webkit-scrollbar": { display: "none" },
+            scrollbarWidth: "none",
           }}>
-          <ToggleButton value="all">
-            <List size={14} />
-            Barchasi ({groupedDebtors.allTotal})
-          </ToggleButton>
-          <ToggleButton value="overdue">
-            <XCircle size={14} />
-            Kechikkan ({groupedDebtors.overdue.length})
-          </ToggleButton>
-          <ToggleButton value="pending">
-            <Clock size={14} />
-            Tasdiq ({groupedDebtors.pending.length})
-          </ToggleButton>
-        </ToggleButtonGroup>
+          {(
+            [
+              {
+                value: "all",
+                icon: <List size={14} />,
+                label: `Barchasi (${groupedDebtors.allTotal})`,
+              },
+              {
+                value: "overdue",
+                icon: <XCircle size={14} />,
+                label: `Kechikkan (${groupedDebtors.overdue.length})`,
+              },
+              {
+                value: "pending",
+                icon: <Clock size={14} />,
+                label: `Tasdiq (${groupedDebtors.pending.length})`,
+              },
+            ] as { value: FilterType; icon: React.ReactNode; label: string }[]
+          ).map((tab) => {
+            const isActive = filterType === tab.value;
+            return (
+              <Box
+                key={tab.value}
+                onClick={() => setFilterType(tab.value)}
+                sx={{
+                  flex: 1,
+                  position: "relative",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "5px",
+                  py: "7px",
+                  px: "6px",
+                  borderRadius: "9px",
+                  cursor: "pointer",
+                  userSelect: "none",
+                  WebkitTapHighlightColor: "transparent",
+                  flexShrink: 0,
+                  "&:active": { transform: "scale(0.94)" },
+                  transition: "transform 0.1s ease",
+                }}>
+                {/* Siljuvchi ko'k pill — framer-motion layoutId */}
+                {isActive && (
+                  <motion.div
+                    layoutId="filter-pill"
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      borderRadius: 9,
+                      background: "#2563EB",
+                    }}
+                    transition={{
+                      type: "spring",
+                      stiffness: 380,
+                      damping: 30,
+                      mass: 0.8,
+                    }}
+                  />
+                )}
+                {/* Icon */}
+                <Box
+                  sx={{
+                    display: "flex",
+                    position: "relative",
+                    zIndex: 1,
+                    color: isActive ? "white" : "#64748B",
+                    transition: "color 0.15s ease",
+                  }}>
+                  {tab.icon}
+                </Box>
+                {/* Label */}
+                <Typography
+                  sx={{
+                    fontSize: "0.72rem",
+                    fontWeight: isActive ? 700 : 600,
+                    position: "relative",
+                    zIndex: 1,
+                    color: isActive ? "white" : "#64748B",
+                    whiteSpace: "nowrap",
+                    transition: "color 0.15s ease",
+                    lineHeight: 1,
+                  }}>
+                  {tab.label}
+                </Typography>
+              </Box>
+            );
+          })}
+        </Box>
 
         {/* Date filter */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.25 }}>
