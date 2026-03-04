@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import {
   Box,
   Typography,
-  Paper,
   Button,
   List,
   ListItem,
@@ -10,8 +9,7 @@ import {
   Stack,
   Avatar,
 } from "@mui/material";
-import { Plus, DollarSign, Banknote, TrendingUp, User } from "lucide-react";
-import { borderRadius, shadows } from "../theme/colors";
+import { Plus, DollarSign, Banknote, TrendingUp, User, Receipt } from "lucide-react";
 import { useAppDispatch } from "../hooks/useAppDispatch";
 import { useSelector } from "react-redux";
 import { RootState } from "../store";
@@ -25,9 +23,7 @@ import ExpensesTab from "../sestions/Expenses/ExpensesTab";
 import ActionExpenses from "../sestions/Expenses/action/action-expenses";
 import ExpensesDialog from "../sestions/Expenses/ExpensesDialog";
 import ExpensesInfo from "../sestions/Expenses/ExpensesInfo";
-import DashboardCardImproved from "../components/DashboardCard/DashboardCardImproved";
 import { getDashboard } from "../store/actions/dashboardActions";
-import { responsive } from "../theme/responsive";
 
 type TabPageProps = {
   activeTabIndex: number;
@@ -39,7 +35,6 @@ export default function ExpensesView({ activeTabIndex, index }: TabPageProps) {
   const { activeExpenses, inActiveExpenses } = useSelector(
     (state: RootState) => state.expenses,
   );
-  // ====================== Dashboard ======================
   const { dashboard } = useSelector((state: RootState) => state.dashboard);
   const { user } = useSelector((state: RootState) => state.auth);
 
@@ -52,27 +47,6 @@ export default function ExpensesView({ activeTabIndex, index }: TabPageProps) {
     }
   }, [activeTabIndex, index]);
 
-  const balanceDollar = dashboard?.balance?.dollar ?? 0;
-  const balanceSum = dashboard?.balance?.sum ?? 0;
-
-  const getDisplayName = (fullName: string) => {
-    if (fullName.length > 20) {
-      const parts = fullName.split(" ");
-      if (parts.length > 1) {
-        return `${parts[0]} ${parts[parts.length - 1].charAt(0)}.`;
-      }
-    }
-    return fullName;
-  };
-
-  const handleOpenDrawer = (expenses: IExpenses) => {
-    setDrawerOpen(expenses);
-  };
-
-  const handleCloseDrawer = () => {
-    setDrawerOpen(null);
-  };
-
   useEffect(() => {
     if (activeTabIndex === index) {
       dispatch(getActiveExpenses());
@@ -80,296 +54,283 @@ export default function ExpensesView({ activeTabIndex, index }: TabPageProps) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTabIndex, index]);
-  const totalUSD = activeExpenses?.reduce((acc, exp) => {
-    return acc + exp.currencyDetails.dollar;
-  }, 0);
 
-  const totalUZS = activeExpenses?.reduce((acc, exp) => {
-    return acc + exp.currencyDetails.sum;
-  }, 0);
+  const balanceDollar = dashboard?.balance?.dollar ?? 0;
+  const balanceSum = dashboard?.balance?.sum ?? 0;
+
+  const totalUSD = activeExpenses?.reduce((acc, exp) => acc + exp.currencyDetails.dollar, 0);
+  const totalUZS = activeExpenses?.reduce((acc, exp) => acc + exp.currencyDetails.sum, 0);
+
+  const getDisplayName = (fullName: string) => {
+    if (fullName.length > 20) {
+      const parts = fullName.split(" ");
+      if (parts.length > 1) return `${parts[0]} ${parts[parts.length - 1].charAt(0)}.`;
+    }
+    return fullName;
+  };
+
+  const handleOpenDrawer = (expenses: IExpenses) => setDrawerOpen(expenses);
+  const handleCloseDrawer = () => setDrawerOpen(null);
+
+  const currentList = activeTab === 0 ? activeExpenses : inActiveExpenses;
+
   return (
-    <Box
-      sx={{
-        maxWidth: "1400px",
-        mx: "auto",
-        px: { xs: 1, sm: 2, md: 3 },
-      }}
-    >
-      {/* User Greeting - Responsive */}
+    <Box sx={{ px: { xs: 1.5, sm: 2 }, pb: 4, maxWidth: 600, mx: "auto" }}>
+
+      {/* ── User greeting ── */}
       <Box
         sx={{
           display: "flex",
           alignItems: "center",
-          mb: 3,
-          gap: responsive.spacing.gap,
-          p: responsive.spacing.card,
-          bgcolor: "background.paper",
-          borderRadius: 3,
-          boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
+          gap: 1.5,
+          mb: 2,
+          p: 1.75,
+          bgcolor: "white",
+          borderRadius: "16px",
+          boxShadow: "0 1px 4px rgba(0,0,0,0.07)",
+          border: "1px solid rgba(0,0,0,0.05)",
         }}
       >
         <Avatar
           sx={{
-            width: responsive.avatar.large,
-            height: responsive.avatar.large,
-            bgcolor: "primary.main",
-            fontSize: responsive.typography.h6,
-            fontWeight: 700,
+            width: 44,
+            height: 44,
+            bgcolor: "#4F46E5",
+            borderRadius: "12px",
           }}
         >
-          <User size={responsive.icon.medium.xs} />
+          <User size={22} />
         </Avatar>
-        <Box sx={{ minWidth: 0, flex: 1 }}>
+        <Box sx={{ flex: 1, minWidth: 0 }}>
           <Typography
-            variant="h6"
-            fontWeight="bold"
-            color="text.primary"
             sx={{
-              fontSize: responsive.typography.h6,
-              lineHeight: 1.2,
+              fontSize: "0.95rem",
+              fontWeight: 700,
+              color: "#1E293B",
               overflow: "hidden",
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
             }}
           >
-            {getDisplayName(
-              `${user?.firstname} ${user?.lastname}`.trim() || "Foydalanuvchi",
-            )}
+            {getDisplayName(`${user?.firstname} ${user?.lastname}`.trim() || "Foydalanuvchi")}
           </Typography>
-          <Typography
-            variant="body2"
-            color="text.secondary"
-            sx={{
-              fontSize: responsive.typography.body2,
-              mt: 0.5,
-            }}
-          >
+          <Typography sx={{ fontSize: "0.72rem", color: "#94A3B8", fontWeight: 500 }}>
             Xush kelibsiz!
           </Typography>
         </Box>
-      </Box>
-      
-      {/* option 2 */}
-      <Box
-        sx={{
-          display: "grid",
-          gridTemplateColumns: {
-            xs: "1fr", // mobile (Telegram)
-            sm: "repeat(1, 1fr)", // tablet
-            md: "repeat(1, 1fr)", // desktop
-          },
-          gap: { xs: 1.5, sm: 2 },
-          mb: 3,
-        }}
-      >
-        {/* BALANCE – main card */}
-        <DashboardCardImproved
-          title="Mening balansim"
-          total={`${balanceDollar} $`}
-          subtitle={`${balanceSum.toLocaleString()} so‘m`}
-          icon={<TrendingUp size={22} />}
-          color="success"
-        />
-
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "1fr 1fr", md: "repeat(2, 1fr)" },
-            gap: 2,
-            mb: 3,
-          }}
-        >
-          {/* USD */}
-          <Paper
-            sx={{
-              p: { xs: 2, sm: 2.5 },
-              borderRadius: borderRadius.lg,
-              background: "linear-gradient(135deg, #2563eb, #1d4ed8)",
-              color: "white",
-              boxShadow: shadows.colored("rgba(37, 99, 235, 0.18)"),
-            }}
-          >
-            <Stack spacing={0.5}>
-              <Stack direction="row" alignItems="center" gap={1}>
-                <DollarSign size={20} />
-                <Typography fontSize={12} sx={{ opacity: 0.85 }}>
-                  Dollar
-                </Typography>
-              </Stack>
-
-              <Typography
-                fontSize={{ xs: 22, sm: 24 }}
-                fontWeight={800}
-                lineHeight={1.2}
-              >
-                {totalUSD?.toLocaleString()} $
-              </Typography>
-            </Stack>
-          </Paper>
-
-          {/* UZS */}
-          <Paper
-            sx={{
-              p: { xs: 2, sm: 2.5 },
-              borderRadius: borderRadius.lg,
-              background: "linear-gradient(135deg, #0ea5e9, #0284c7)",
-              color: "white",
-              boxShadow: shadows.colored("rgba(14, 165, 233, 0.18)"),
-            }}
-          >
-            <Stack spacing={0.5}>
-              <Stack direction="row" alignItems="center" gap={1}>
-                <Banknote size={20} />
-                <Typography fontSize={12} sx={{ opacity: 0.85 }}>
-                  So‘m
-                </Typography>
-              </Stack>
-
-              <Typography
-                fontSize={{ xs: 22, sm: 24 }}
-                fontWeight={800}
-                lineHeight={1.2}
-              >
-                {totalUZS?.toLocaleString()}
-              </Typography>
-            </Stack>
-          </Paper>
-        </Box>
-      </Box>
-      <Box sx={{ display: "flex", gap: 2, mb: 3, flexWrap: "wrap" }}>
         <Button
           variant="contained"
-          startIcon={<Plus size={20} />}
-          onClick={() => {
-            dispatch(openExpensesModal({ type: "add", data: undefined }));
-          }}
+          size="small"
+          startIcon={<Plus size={15} />}
+          onClick={() => dispatch(openExpensesModal({ type: "add", data: undefined }))}
           sx={{
-            ml: "auto",
-            py: 1.5,
-            px: 3,
-            borderRadius: borderRadius.md,
+            borderRadius: "10px",
             fontWeight: 700,
-            background: "#10b981",
-            boxShadow: shadows.colored("rgba(16, 185, 129, 0.15)"),
-            "&:hover": {
-              background: "#059669",
-            },
+            fontSize: "0.75rem",
+            px: 1.5,
+            py: 0.75,
+            bgcolor: "#10B981",
+            boxShadow: "none",
+            "&:hover": { bgcolor: "#059669", boxShadow: "none" },
           }}
         >
           Qo'shish
         </Button>
       </Box>
+
+      {/* ── Balance + Stats ── */}
+      <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
+        {/* Main balance */}
+        <Box
+          sx={{
+            flex: 2,
+            p: 1.75,
+            bgcolor: "#4F46E5",
+            borderRadius: "16px",
+            color: "white",
+            boxShadow: "0 4px 16px rgba(79,70,229,0.25)",
+          }}
+        >
+          <Box display="flex" alignItems="center" gap={0.75} mb={0.75}>
+            <TrendingUp size={16} style={{ opacity: 0.85 }} />
+            <Typography sx={{ fontSize: "0.7rem", opacity: 0.85, fontWeight: 500 }}>
+              Mening balansim
+            </Typography>
+          </Box>
+          <Typography sx={{ fontSize: "1.4rem", fontWeight: 800, lineHeight: 1.1 }}>
+            {balanceDollar.toLocaleString()} $
+          </Typography>
+          <Typography sx={{ fontSize: "0.72rem", opacity: 0.75, mt: 0.25 }}>
+            {balanceSum.toLocaleString()} so'm
+          </Typography>
+        </Box>
+
+        {/* USD & UZS totals */}
+        <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 1 }}>
+          <Box
+            sx={{
+              flex: 1,
+              p: 1.25,
+              bgcolor: "#EEF2FF",
+              borderRadius: "12px",
+              display: "flex",
+              flexDirection: "column",
+              gap: 0.25,
+            }}
+          >
+            <Box display="flex" alignItems="center" gap={0.5}>
+              <DollarSign size={13} color="#4F46E5" />
+              <Typography sx={{ fontSize: "0.62rem", color: "#4F46E5", fontWeight: 600 }}>
+                Harajat $
+              </Typography>
+            </Box>
+            <Typography sx={{ fontSize: "0.95rem", fontWeight: 800, color: "#1E293B" }}>
+              {totalUSD?.toLocaleString() || 0}$
+            </Typography>
+          </Box>
+          <Box
+            sx={{
+              flex: 1,
+              p: 1.25,
+              bgcolor: "#E0F2FE",
+              borderRadius: "12px",
+              display: "flex",
+              flexDirection: "column",
+              gap: 0.25,
+            }}
+          >
+            <Box display="flex" alignItems="center" gap={0.5}>
+              <Banknote size={13} color="#0EA5E9" />
+              <Typography sx={{ fontSize: "0.62rem", color: "#0EA5E9", fontWeight: 600 }}>
+                Harajat so'm
+              </Typography>
+            </Box>
+            <Typography sx={{ fontSize: "0.85rem", fontWeight: 800, color: "#1E293B" }}>
+              {(totalUZS || 0) >= 1_000_000
+                ? `${((totalUZS || 0) / 1_000_000).toFixed(1)}M`
+                : (totalUZS || 0).toLocaleString()}
+            </Typography>
+          </Box>
+        </Box>
+      </Box>
+
+      {/* ── Tabs ── */}
       <ExpensesTab activeTab={activeTab} setActiveTab={setActiveTab} />
-      <Box>
-        {activeTab === 0 && (
-          <List sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-            {activeExpenses?.map((expenses) => (
+
+      {/* ── Expense list ── */}
+      <Box sx={{ mt: 1 }}>
+        {currentList && currentList.length > 0 ? (
+          <List disablePadding sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+            {currentList.map((expenses) => (
               <ListItem
                 key={expenses.id}
-                component={Paper}
+                onClick={() => handleOpenDrawer(expenses)}
                 sx={{
                   cursor: "pointer",
-                  borderRadius: borderRadius.md,
-                  boxShadow: shadows.sm,
-                  bgcolor: "background.paper",
-                  mb: 2,
-                  transition: "all 0.3s ease",
+                  bgcolor: "white",
+                  borderRadius: "14px",
+                  boxShadow: "0 1px 4px rgba(0,0,0,0.07)",
+                  border: "1px solid rgba(0,0,0,0.05)",
+                  px: 2,
+                  py: 1.25,
+                  transition: "all 0.2s",
                   "&:hover": {
-                    boxShadow: shadows.md,
-                    transform: "translateY(-2px)",
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                    transform: "translateY(-1px)",
                   },
+                  ...(activeTab === 1 && { opacity: 0.7 }),
                 }}
-                onClick={() => handleOpenDrawer(expenses)}
-                secondaryAction={<ActionExpenses expenses={expenses} />}
+                secondaryAction={
+                  activeTab === 0 ? <ActionExpenses expenses={expenses} /> : undefined
+                }
               >
+                <Box
+                  sx={{
+                    width: 38,
+                    height: 38,
+                    borderRadius: "10px",
+                    bgcolor: "#EEF2FF",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    mr: 1.5,
+                    flexShrink: 0,
+                  }}
+                >
+                  <Receipt size={18} color="#4F46E5" />
+                </Box>
                 <ListItemText
                   primary={
-                    <Stack direction="row" gap={5}>
+                    <Stack direction="row" gap={1.5} alignItems="center">
                       {expenses.currencyDetails.dollar > 0 && (
-                        <Typography
-                          variant="h6"
-                          fontWeight={600}
-                          color="primary.main"
-                        >
-                          {`${expenses.currencyDetails.dollar.toLocaleString()}$`}
+                        <Typography sx={{ fontSize: "0.95rem", fontWeight: 700, color: "#4F46E5" }}>
+                          {expenses.currencyDetails.dollar.toLocaleString()} $
                         </Typography>
                       )}
                       {expenses.currencyDetails.sum > 0 && (
-                        <Typography
-                          variant="h6"
-                          fontWeight={600}
-                          color="primary.main"
-                        >
-                          {`${expenses.currencyDetails.sum.toLocaleString()} so‘m`}
+                        <Typography sx={{ fontSize: "0.95rem", fontWeight: 700, color: "#0EA5E9" }}>
+                          {expenses.currencyDetails.sum.toLocaleString()} so'm
                         </Typography>
                       )}
                     </Stack>
                   }
                   secondary={
-                    <Typography variant="subtitle1" color="text.secondary">
-                      {expenses.notes}
-                    </Typography>
+                    expenses.notes ? (
+                      <Typography
+                        sx={{
+                          fontSize: "0.75rem",
+                          color: "#94A3B8",
+                          mt: 0.25,
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                          maxWidth: "180px",
+                        }}
+                      >
+                        {expenses.notes}
+                      </Typography>
+                    ) : null
                   }
                 />
               </ListItem>
             ))}
           </List>
-        )}
-        {activeTab === 1 && (
-          <List sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-            {inActiveExpenses?.map((expenses) => (
-              <ListItem
-                key={expenses.id}
-                component={Paper}
-                sx={{
-                  cursor: "pointer",
-                  borderRadius: borderRadius.md,
-                  boxShadow: shadows.sm,
-                  bgcolor: "rgba(102, 126, 234, 0.05)",
-                  mb: 2,
-                  transition: "all 0.3s ease",
-                  "&:hover": {
-                    boxShadow: shadows.md,
-                    transform: "translateY(-2px)",
-                  },
-                }}
-                onClick={() => handleOpenDrawer(expenses)}
-                // secondaryAction={<ActionExpenses expenses={expenses} />}
-              >
-                <ListItemText
-                  primary={
-                    <Stack direction="row" gap={5}>
-                      {expenses.currencyDetails.dollar > 0 && (
-                        <Typography
-                          variant="h6"
-                          fontWeight={600}
-                          color="primary.main"
-                        >
-                          {`${expenses.currencyDetails.dollar.toLocaleString()}$`}
-                        </Typography>
-                      )}
-                      {expenses.currencyDetails.sum > 0 && (
-                        <Typography
-                          variant="h6"
-                          fontWeight={600}
-                          color="primary.main"
-                        >
-                          {`${expenses.currencyDetails.sum.toLocaleString()} so‘m`}
-                        </Typography>
-                      )}
-                    </Stack>
-                  }
-                  secondary={
-                    <Typography variant="subtitle1" color="text.secondary">
-                      {expenses.notes}
-                    </Typography>
-                  }
-                />
-              </ListItem>
-            ))}
-          </List>
+        ) : (
+          <Box
+            sx={{
+              textAlign: "center",
+              py: 6,
+              px: 3,
+              bgcolor: "white",
+              borderRadius: "16px",
+              border: "1px solid #E2E8F0",
+            }}
+          >
+            <Box
+              sx={{
+                width: 56,
+                height: 56,
+                borderRadius: "50%",
+                bgcolor: "#F1F5F9",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                mx: "auto",
+                mb: 1.5,
+              }}
+            >
+              <Receipt size={26} color="#CBD5E1" />
+            </Box>
+            <Typography sx={{ fontSize: "0.88rem", fontWeight: 600, color: "#475569", mb: 0.5 }}>
+              Harajatlar yo'q
+            </Typography>
+            <Typography sx={{ fontSize: "0.76rem", color: "#94A3B8" }}>
+              {activeTab === 0 ? "Faol harajat qo'shing" : "Arxivlangan harajatlar yo'q"}
+            </Typography>
+          </Box>
         )}
       </Box>
+
       <ExpensesDialog />
       <ExpensesInfo open={drawerOpen} onClose={handleCloseDrawer} />
     </Box>

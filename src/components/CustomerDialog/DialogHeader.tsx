@@ -1,8 +1,7 @@
-import { Avatar, Box, IconButton, Typography } from "@mui/material";
 import { FC } from "react";
-import {
-  MdArrowBack,
-} from "react-icons/md";
+
+import { Box, Typography } from "@mui/material";
+import { ArrowLeft } from "lucide-react";
 import { ICustomer } from "../../types/ICustomer";
 import { useAppDispatch } from "../../hooks/useAppDispatch";
 import { setCustomerDetails } from "../../store/slices/customerSlice";
@@ -12,46 +11,95 @@ interface IProps {
   onClose: () => void;
 }
 
-const DialogHeader: FC<IProps> = ({
-  customer,
-  onClose,
-}) => {
+const DialogHeader: FC<IProps> = ({ customer, onClose }) => {
   const dispatch = useAppDispatch();
+
+  const getInitials = (name: string) => {
+    const parts = name.trim().split(" ");
+    if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    return name.slice(0, 2).toUpperCase();
+  };
+
   return (
-    <Box display="flex" alignItems="center" gap={2} mb={3}>
-      <IconButton
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        px: 5,
+        py: 1.25,
+      }}>
+      {/* Back button */}
+      <Box
         onClick={() => {
           onClose();
           dispatch(setCustomerDetails(null));
         }}
-        size="large"
         sx={{
-          pl: 0,
-          minWidth: 52,
+          width: 40,
+          height: 40,
+          borderRadius: "20px",
+          bgcolor: "#F1F5F9",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-        }}
-      >
-        <MdArrowBack />
-      </IconButton>
-      <Box width="100%" display="flex" justifyContent="space-between">
-        <Box display="flex" alignItems="center">
-          <Avatar
-            sx={{ width: 40, height: 40, mr: 2, bgcolor: "primary.main" }}
-          >
-            {customer.fullName.charAt(0)}
-          </Avatar>
-          <Box>
-            <Typography variant="h6" color="primary.main">
-              {customer.fullName}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {customer.phoneNumber}
+          cursor: "pointer",
+          flexShrink: 0,
+          transition: "all 0.15s",
+          "&:hover": { bgcolor: "#E2E8F0" },
+          "&:active": { scale: "0.95" },
+        }}>
+        <ArrowLeft size={20} color="#475569" />
+      </Box>
+
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: 1,
+        }}>
+        {/* Avatar */}
+        <Box
+          sx={{
+            width: 45,
+            height: 45,
+            borderRadius: "50px",
+            bgcolor: "#EEF2FF",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+            color: "#4F46E5",
+            fontSize: "0.85rem",
+            fontWeight: 800,
+          }}>
+          {getInitials(customer.fullName)}
+        </Box>
+
+        {/* Info */}
+        <Box
+          sx={{
+            flex: 1,
+            minWidth: 0,
+          }}>
+          <Typography
+            sx={{
+              fontSize: "0.95rem",
+              fontWeight: 700,
+              color: "#1E293B",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              lineHeight: 1.2,
+            }}>
+            {customer.fullName}
+          </Typography>
+          <Box display="flex" alignItems="center" gap={0.5} mt={0.5}>
+            <Typography sx={{ fontSize: "0.72rem", color: "black" }}>
+              {customer.phoneNumber ? customer.phoneNumber : "not phone number"}
             </Typography>
           </Box>
         </Box>
-
       </Box>
     </Box>
   );

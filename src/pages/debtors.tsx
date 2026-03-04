@@ -1,12 +1,10 @@
 import { useEffect, useState, useMemo } from "react";
+
 import {
-  List,
-  Paper,
   TextField,
   Typography,
   InputAdornment,
   Box,
-  Stack,
   Chip,
   ToggleButtonGroup,
   ToggleButton,
@@ -22,9 +20,9 @@ import {
   AlertCircle,
   DollarSign,
   Banknote,
-  Filter,
   CheckCircle,
   XCircle,
+  List,
 } from "lucide-react";
 
 import ContractDebtorItem from "../components/ContractDebtorItem";
@@ -35,11 +33,8 @@ import { RootState } from "../store";
 import { getAllCustomersDebtors } from "../store/actions/customerActions";
 import Loader from "../components/Loader/Loader";
 import CustomerDialog from "../components/CustomerDialog/CustomerDialog";
-import { borderRadius, shadows } from "../theme/colors";
 import { useDebounce } from "../hooks/useDebounce";
 import dayjs from "../utils/dayjs-config";
-import DashboardCardImproved from "../components/DashboardCard/DashboardCardImproved";
-import { responsive } from "../theme/responsive";
 
 type TabPageProps = {
   activeTabIndex: number;
@@ -48,6 +43,134 @@ type TabPageProps = {
 
 type FilterType = "all" | "overdue" | "pending";
 
+// ─── Mini stat card ───────────────────────────────────────────────────────────
+function StatCard({
+  icon,
+  label,
+  value,
+  color,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string | number;
+  color: string;
+}) {
+  return (
+    <Box
+      sx={{
+        flex: 1,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 0.5,
+        py: 1.25,
+        px: 0.75,
+        bgcolor: "white",
+        borderRadius: "14px",
+        boxShadow: "0 1px 4px rgba(0,0,0,0.07)",
+        border: "1px solid rgba(0,0,0,0.05)",
+      }}>
+      <Box
+        sx={{
+          width: 40,
+          height: 40,
+          borderRadius: "20px",
+          bgcolor: `${color}15`,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: color,
+        }}>
+        {icon}
+      </Box>
+      <Typography
+        sx={{
+          fontSize: "0.65rem",
+          color: "#94A3B8",
+          fontWeight: 500,
+          textAlign: "center",
+          lineHeight: 1.5,
+        }}>
+        {label}
+      </Typography>
+      <Typography
+        sx={{
+          fontSize: "0.85rem",
+          fontWeight: 800,
+          color: "#1E293B",
+          textAlign: "center",
+          lineHeight: 1.1,
+        }}>
+        {value}
+      </Typography>
+    </Box>
+  );
+}
+
+// ─── Section header ───────────────────────────────────────────────────────────
+function SectionHeader({
+  icon,
+  label,
+  count,
+  accentColor,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  count: number;
+  accentColor: string;
+}) {
+  return (
+    <Box
+      display="flex"
+      alignItems="center"
+      gap={1}
+      sx={{ mb: 1.5, mt: 2.5, px: 0.5 }}>
+      <Box
+        sx={{
+          width: 3.5,
+          height: 22,
+          borderRadius: "4px",
+          bgcolor: accentColor,
+          flexShrink: 0,
+        }}
+      />
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: 0.75,
+          color: accentColor,
+        }}>
+        {icon}
+      </Box>
+      <Typography
+        sx={{
+          fontSize: "0.82rem",
+          fontWeight: 700,
+          color: "#334155",
+          flex: 1,
+          letterSpacing: "0.01em",
+        }}>
+        {label}
+      </Typography>
+      <Box
+        sx={{
+          px: 1,
+          py: 0.2,
+          borderRadius: "20px",
+          bgcolor: `${accentColor}15`,
+          border: `1px solid ${accentColor}30`,
+        }}>
+        <Typography
+          sx={{ fontSize: "0.72rem", fontWeight: 700, color: accentColor }}>
+          {count}
+        </Typography>
+      </Box>
+    </Box>
+  );
+}
+
+// ─── Main page ────────────────────────────────────────────────────────────────
 export default function DebtorsPage({ activeTabIndex, index }: TabPageProps) {
   const dispatch = useAppDispatch();
   const { customersDebtor, isLoading } = useSelector(
@@ -71,7 +194,7 @@ export default function DebtorsPage({ activeTabIndex, index }: TabPageProps) {
     if (activeTabIndex === index) {
       const dateFilter =
         selectedDate && selectedDate.trim() !== "" ? selectedDate : undefined;
-      dispatch(getAllCustomersDebtors(dateFilter)); // ✅ YANGI ACTION ISHLATAMIZ
+      dispatch(getAllCustomersDebtors(dateFilter));
     }
   }, [activeTabIndex, index, selectedDate, dispatch]);
 
@@ -84,7 +207,6 @@ export default function DebtorsPage({ activeTabIndex, index }: TabPageProps) {
   };
 
   const groupedDebtors = useMemo(() => {
-    // 1. Qidirish filtri
     const filtered = customersDebtor.filter((contract) => {
       const fullName = contract.fullName.toLowerCase();
       const productName = contract.productName?.toLowerCase() || "";
@@ -97,14 +219,12 @@ export default function DebtorsPage({ activeTabIndex, index }: TabPageProps) {
 
     const today = dayjs().startOf("day");
 
-    // 2. Guruhlash
-    const pendingPayments: IDebtorContract[] = []; // isPending === true (kassa kutilmoqda)
-    const todayPayments: IDebtorContract[] = [];   // Bugun to'lash kerak
-    const upcomingPayments: IDebtorContract[] = []; // Yaqin (keyingi 15 kun)
-    const overduePayments: IDebtorContract[] = [];  // Kechikkan
+    const pendingPayments: IDebtorContract[] = [];
+    const todayPayments: IDebtorContract[] = [];
+    const upcomingPayments: IDebtorContract[] = [];
+    const overduePayments: IDebtorContract[] = [];
 
     filtered.forEach((contract) => {
-      // Kassa kutilmoqda to'lovlar — alohida guruh (ustuvor)
       if (contract.isPending) {
         pendingPayments.push(contract);
         return;
@@ -122,37 +242,26 @@ export default function DebtorsPage({ activeTabIndex, index }: TabPageProps) {
 
       const diffDays = paymentDate.diff(today, "day");
 
-      if (diffDays < 0) {
-        overduePayments.push(contract); // Kechikkan
-      } else if (diffDays === 0) {
-        todayPayments.push(contract);   // Bugun
-      } else {
-        upcomingPayments.push(contract); // Keyingi kunlarda
-      }
+      if (diffDays < 0) overduePayments.push(contract);
+      else if (diffDays === 0) todayPayments.push(contract);
+      else upcomingPayments.push(contract);
     });
 
-    // 3. Saralash
     const sortByDate = (a: IDebtorContract, b: IDebtorContract) => {
       const dateA =
-        a.nextPaymentDate ?
-          dayjs(a.nextPaymentDate)
-        : dayjs().add(100, "year");
+        a.nextPaymentDate ? dayjs(a.nextPaymentDate) : dayjs().add(100, "year");
       const dateB =
-        b.nextPaymentDate ?
-          dayjs(b.nextPaymentDate)
-        : dayjs().add(100, "year");
+        b.nextPaymentDate ? dayjs(b.nextPaymentDate) : dayjs().add(100, "year");
       return dateA.diff(dateB);
     };
 
     const sortedPending = pendingPayments.sort(sortByDate);
     const sortedToday = todayPayments.sort(sortByDate);
     const sortedUpcoming = upcomingPayments.sort(sortByDate);
-    const sortedOverdue = overduePayments.sort((a, b) => {
-      // Kechikkanlar — eng ko'p kechikkan birinchi
-      return (b.delayDays || 0) - (a.delayDays || 0);
-    });
+    const sortedOverdue = overduePayments.sort(
+      (a, b) => (b.delayDays || 0) - (a.delayDays || 0),
+    );
 
-    // 4. Filtr turga qarab displayData
     let displayData: IDebtorContract[] = [];
 
     switch (filterType) {
@@ -164,7 +273,6 @@ export default function DebtorsPage({ activeTabIndex, index }: TabPageProps) {
         break;
       case "all":
       default:
-        // "Barchasi" — guruhlangan ko'rinishda
         break;
     }
 
@@ -192,448 +300,288 @@ export default function DebtorsPage({ activeTabIndex, index }: TabPageProps) {
     setSelectedCustomer(null);
   };
 
-  if (isLoading) {
-    return <Loader />;
-  }
+  if (isLoading) return <Loader />;
 
   return (
-    <Box
-      sx={{
-        maxWidth: "1400px",
-        mx: "auto",
-        px: { xs: 1, sm: 2, md: 3 },
-        pb: 4,
-      }}>
-      <Box>
-        <Box
-          sx={{
-            p: { xs: 2, sm: 2.5 },
-            mb: 1,
-            background: "#ef4444",
-            borderRadius: borderRadius.lg,
-            color: "white",
-            boxShadow: shadows.colored("rgba(235, 51, 73, 0.3)"),
-          }}>
-          <Box display="flex" alignItems="center" gap={1.5} mb={1}>
-            <AlertTriangle size={28} />
-            <Box>
-              <Typography
-                variant="caption"
-                sx={{ opacity: 0.9, fontSize: "0.75rem" }}>
-                Jami qarzdorlar
-              </Typography>
-              <Typography variant="h4" fontWeight={700}>
-                {groupedDebtors.allTotal}
-              </Typography>
-            </Box>
-          </Box>
-          <Typography variant="body2" sx={{ opacity: 0.9 }}>
-            Kechikkan to'lovlar
-          </Typography>
-        </Box>
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: {
-              xs: "1fr 1fr",
-              md: "repeat(2, 1fr)",
-            },
-            gap: responsive.spacing.gap,
-            mb: 3,
-          }}>
-          <DashboardCardImproved
-            title="Bugungi to'lovlar ($)"
-            total={`${todayDollar} $`}
-            subtitle={`${todayCount} ta to'lov`}
-            icon={<DollarSign size={responsive.icon.medium.xs} />}
-            color="primary"
-          />
-
-          <DashboardCardImproved
-            title="Bugungi to'lovlar (So'm)"
-            total={`${todaySum.toLocaleString()} UZS`}
-            subtitle={`${todayCount} ta to'lov`}
-            icon={<Banknote size={responsive.icon.medium.xs} />}
-            color="info"
-          />
-        </Box>
+    <Box sx={{ px: { xs: 1.5, sm: 2 }, pb: 4, maxWidth: 600, mx: "auto" }}>
+      {/* ── Stat cards ── */}
+      <Box sx={{ display: "flex", gap: 1.5, mb: 1.5 }}>
+        <StatCard
+          icon={<AlertTriangle size={20} />}
+          label="Jami qarzdor"
+          value={groupedDebtors.allTotal}
+          color="#EF4444"
+        />
+        <StatCard
+          icon={<DollarSign size={20} />}
+          label={`Bugun (${todayCount} ta)`}
+          value={`${todayDollar}$`}
+          color="#4F46E5"
+        />
+        <StatCard
+          icon={<Banknote size={20} />}
+          label="Bugun UZS"
+          value={todaySum > 0 ? `${(todaySum / 1_000_000).toFixed(1)}M` : "0"}
+          color="#0EA5E9"
+        />
       </Box>
 
-      <Paper
+      {/* ── Filters ── */}
+      <Box
         sx={{
-          p: 2.5,
-          mb: 3,
-          borderRadius: borderRadius.lg,
           bgcolor: "white",
-          boxShadow: shadows.md,
+          borderRadius: "16px",
+          p: 1.75,
+          mb: 2,
+          boxShadow: "0 1px 4px rgba(0,0,0,0.07)",
+          border: "1px solid rgba(0,0,0,0.05)",
         }}>
-        <Stack spacing={2}>
-          <Box>
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                mb: 1.5,
-              }}>
-              <Typography
-                variant="subtitle2"
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 0.5,
-                  color: "text.primary",
-                  fontWeight: 600,
-                  fontSize: "0.9rem",
-                }}>
-                <Filter size={18} />
-                To'lovlar filtri
-              </Typography>
-            </Box>
+        {/* Type filter */}
+        <ToggleButtonGroup
+          value={filterType}
+          exclusive
+          onChange={(_, v) => {
+            if (v !== null) setFilterType(v);
+          }}
+          fullWidth
+          size="small"
+          sx={{
+            mb: 1.5,
+            bgcolor: "#F1F5F9",
+            borderRadius: "10px",
+            p: 0.4,
+            gap: 0.4,
+            "& .MuiToggleButton-root": {
+              flex: 1,
+              py: 0.75,
+              fontSize: "0.72rem",
+              fontWeight: 600,
+              textTransform: "none",
+              border: "none !important",
+              borderRadius: "8px !important",
+              color: "#64748B",
+              transition: "all 0.2s",
+              gap: 0.5,
+              "&.Mui-selected": {
+                bgcolor: "white",
+                color: "#4F46E5",
+                boxShadow: "0 1px 4px rgba(0,0,0,0.1)",
+              },
+            },
+          }}>
+          <ToggleButton value="all">
+            <List size={14} />
+            Barchasi ({groupedDebtors.allTotal})
+          </ToggleButton>
+          <ToggleButton value="overdue">
+            <XCircle size={14} />
+            Kechikkan ({groupedDebtors.overdue.length})
+          </ToggleButton>
+          <ToggleButton value="pending">
+            <Clock size={14} />
+            Tasdiq ({groupedDebtors.pending.length})
+          </ToggleButton>
+        </ToggleButtonGroup>
 
-            <ToggleButtonGroup
-              value={filterType}
-              exclusive
-              onChange={(_, newFilter) => {
-                if (newFilter !== null) {
-                  setFilterType(newFilter);
-                }
-              }}
-              fullWidth
+        {/* Date filter */}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.25 }}>
+          <Calendar size={15} color="#64748B" />
+          <Typography
+            sx={{
+              fontSize: "0.76rem",
+              fontWeight: 600,
+              color: "#475569",
+              flex: 1,
+            }}>
+            Sana bo'yicha filter
+          </Typography>
+          {selectedDate && (
+            <Chip
+              label="Tozalash"
+              onClick={handleShowAll}
               size="small"
+              onDelete={handleShowAll}
+              deleteIcon={<X size={12} />}
               sx={{
-                "& .MuiToggleButton-root": {
-                  py: 1,
-                  px: { xs: 0.75, sm: 1.5 },
-                  fontSize: { xs: "0.7rem", sm: "0.75rem" },
-                  fontWeight: 600,
-                  textTransform: "none",
-                  lineHeight: 1.3,
-                  border: "1.5px solid #e0e0e0",
-                  flexDirection: "column",
-                  gap: 0.25,
-                  "&.Mui-selected": {
-                    bgcolor: "#667eea",
-                    color: "white",
-                    borderColor: "#667eea",
-                    "&:hover": {
-                      bgcolor: "#5568d3",
-                    },
-                  },
-                },
-              }}>
-              <ToggleButton value="all">
-                <CheckCircle size={15} />
-                <span>Barchasi</span>
-                <Typography component="span" sx={{ fontSize: "0.65rem", fontWeight: 700, opacity: 0.8 }}>
-                  ({groupedDebtors.allTotal})
-                </Typography>
-              </ToggleButton>
-              <ToggleButton value="overdue">
-                <XCircle size={15} />
-                <span>Kechikkan</span>
-                <Typography component="span" sx={{ fontSize: "0.65rem", fontWeight: 700, opacity: 0.8 }}>
-                  ({groupedDebtors.overdue.length})
-                </Typography>
-              </ToggleButton>
-              <ToggleButton value="pending">
-                <Clock size={15} />
-                <span>Tasdiq</span>
-                <Typography component="span" sx={{ fontSize: "0.65rem", fontWeight: 700, opacity: 0.8 }}>
-                  ({groupedDebtors.pending.length})
-                </Typography>
-              </ToggleButton>
-            </ToggleButtonGroup>
-          </Box>
-
-          <Box>
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                mb: 1.5,
-              }}>
-              <Typography
-                variant="subtitle2"
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 0.5,
-                  color: "text.primary",
-                  fontWeight: 600,
-                  fontSize: "0.9rem",
-                }}>
-                <Calendar size={18} />
-                Sana bo'yicha filter
-              </Typography>
-
-              {selectedDate && (
-                <Chip
-                  label="Tozalash"
-                  onClick={handleShowAll}
-                  size="small"
-                  color="error"
-                  variant="filled"
-                  deleteIcon={<X size={14} />}
-                  onDelete={handleShowAll}
-                  sx={{
-                    fontWeight: 600,
-                    fontSize: "0.7rem",
-                    height: 28,
-                    "& .MuiChip-deleteIcon": {
-                      fontSize: "1rem",
-                    },
-                  }}
-                />
-              )}
-            </Box>
-
-            <TextField
-              fullWidth
-              type="date"
-              value={selectedDate}
-              onChange={handleDateChange}
-              size="medium"
-              placeholder="Sanani tanlang"
-              InputProps={{
-                sx: {
-                  borderRadius: borderRadius.md,
-                  bgcolor: "grey.50",
-                  "& fieldset": {
-                    border: "1.5px solid #e0e0e0",
-                  },
-                  "&:hover fieldset": {
-                    borderColor: "#eb3349",
-                  },
-                  "&.Mui-focused fieldset": {
-                    borderColor: "#eb3349",
-                    borderWidth: "2px",
-                  },
-                  "& input": {
-                    fontSize: "0.95rem",
-                    fontWeight: 500,
-                    cursor: "pointer",
-                  },
-                },
-              }}
-              helperText={
-                selectedDate ?
-                  `${dayjs(selectedDate).format("DD MMMM YYYY")} gacha bo'lgan kechikkan to'lovlar`
-                : "Bugungi kungacha barcha kechikkan to'lovlar"
-              }
-              FormHelperTextProps={{
-                sx: {
-                  fontSize: "0.75rem",
-                  color: selectedDate ? "error.main" : "success.main",
-                  fontWeight: 500,
-                  mt: 0.75,
-                },
+                height: 22,
+                fontSize: "0.65rem",
+                fontWeight: 600,
+                bgcolor: "#FEE2E2",
+                color: "#DC2626",
+                border: "none",
+                "& .MuiChip-deleteIcon": { color: "#DC2626" },
               }}
             />
-          </Box>
-
-          <TextField
-            fullWidth
-            placeholder="Ism, familiya yoki telefon raqam bo'yicha qidiring..."
-            variant="outlined"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            size="medium"
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Search size={20} color="#eb3349" />
-                </InputAdornment>
-              ),
-              sx: {
-                borderRadius: borderRadius.md,
-                bgcolor: "grey.50",
-                "& fieldset": { border: "none" },
-                "&:hover": {
-                  bgcolor: "rgba(235, 51, 73, 0.05)",
-                },
-                "&.Mui-focused": {
-                  bgcolor: "rgba(235, 51, 73, 0.05)",
-                },
+          )}
+        </Box>
+        <TextField
+          fullWidth
+          type="date"
+          value={selectedDate}
+          onChange={handleDateChange}
+          size="small"
+          InputProps={{
+            sx: {
+              borderRadius: "10px",
+              bgcolor: "#F8FAFC",
+              fontSize: "0.85rem",
+              "& fieldset": { border: "1.5px solid #E2E8F0" },
+              "&:hover fieldset": { borderColor: "#4F46E5" },
+              "&.Mui-focused fieldset": {
+                borderColor: "#4F46E5",
+                borderWidth: "1.5px",
               },
-            }}
-          />
-        </Stack>
-      </Paper>
+            },
+          }}
+          helperText={
+            selectedDate ?
+              `${dayjs(selectedDate).format("DD MMMM YYYY")} gacha kechikkanlar`
+            : "Bugungi kungacha barcha kechikkanlar"
+          }
+          FormHelperTextProps={{
+            sx: {
+              fontSize: "0.68rem",
+              mt: 0.5,
+              color: selectedDate ? "#EF4444" : "#10B981",
+              fontWeight: 500,
+            },
+          }}
+        />
 
-      {/* "Barchasi" - guruhlangan ko'rinish */}
+        {/* Search */}
+        <TextField
+          fullWidth
+          placeholder="Ism, telefon yoki mahsulot..."
+          variant="outlined"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          size="small"
+          sx={{ mt: 1.25 }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <Search size={16} color="#94A3B8" />
+              </InputAdornment>
+            ),
+            sx: {
+              borderRadius: "10px",
+              bgcolor: "#F8FAFC",
+              fontSize: "0.85rem",
+              "& fieldset": { border: "1.5px solid #E2E8F0" },
+              "&:hover fieldset": { borderColor: "#4F46E5" },
+              "&.Mui-focused fieldset": {
+                borderColor: "#4F46E5",
+                borderWidth: "1.5px",
+              },
+            },
+          }}
+        />
+      </Box>
+
+      {/* ── Grouped view (all) ── */}
       {groupedDebtors.showGrouped && (
         <Box>
-          {/* 1. Tasdiq kutilmoqda */}
           {groupedDebtors.pending.length > 0 && (
-            <Box mb={3}>
-              <Paper
-                sx={{
-                  p: 2,
-                  mb: 2,
-                  borderRadius: borderRadius.lg,
-                  background:
-                    "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
-                  color: "white",
-                  boxShadow: shadows.colored("rgba(245, 158, 11, 0.3)"),
-                }}>
-                <Box display="flex" alignItems="center" gap={1.5}>
-                  <Clock size={24} />
-                  <Box>
-                    <Typography variant="h6" fontWeight={700}>
-                      TASDIQ KUTILMOQDA
-                    </Typography>
-                    <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                      {groupedDebtors.pending.length} ta to'lov — kassa kutmoqda
-                    </Typography>
-                  </Box>
-                </Box>
-              </Paper>
-              <List disablePadding>
-                {groupedDebtors.pending.map((contract) => (
-                  <ContractDebtorItem
-                    key={contract._id}
-                    contract={contract}
-                    onClick={handleContractClick}
-                  />
-                ))}
-              </List>
+            <Box>
+              <SectionHeader
+                icon={<Clock size={15} />}
+                label="TASDIQ KUTILMOQDA"
+                count={groupedDebtors.pending.length}
+                accentColor="#F59E0B"
+              />
+              {groupedDebtors.pending.map((contract) => (
+                <ContractDebtorItem
+                  key={contract._id}
+                  contract={contract}
+                  onClick={handleContractClick}
+                />
+              ))}
             </Box>
           )}
 
-          {/* 2. Bugungi to'lovlar */}
           {groupedDebtors.today.length > 0 && (
-            <Box mb={3}>
-              <Paper
-                sx={{
-                  p: 2,
-                  mb: 2,
-                  borderRadius: borderRadius.lg,
-                  background:
-                    "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                  color: "white",
-                  boxShadow: shadows.colored("rgba(102, 126, 234, 0.3)"),
-                }}>
-                <Box display="flex" alignItems="center" gap={1.5}>
-                  <CheckCircle size={24} />
-                  <Box>
-                    <Typography variant="h6" fontWeight={700}>
-                      BUGUNGI TO'LOVLAR
-                    </Typography>
-                    <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                      {groupedDebtors.today.length} ta to'lov
-                    </Typography>
-                  </Box>
-                </Box>
-              </Paper>
-              <List disablePadding>
-                {groupedDebtors.today.map((contract) => (
-                  <ContractDebtorItem
-                    key={contract._id}
-                    contract={contract}
-                    onClick={handleContractClick}
-                  />
-                ))}
-              </List>
+            <Box>
+              <SectionHeader
+                icon={<CheckCircle size={15} />}
+                label="BUGUNGI TO'LOVLAR"
+                count={groupedDebtors.today.length}
+                accentColor="#4F46E5"
+              />
+              {groupedDebtors.today.map((contract) => (
+                <ContractDebtorItem
+                  key={contract._id}
+                  contract={contract}
+                  onClick={handleContractClick}
+                />
+              ))}
             </Box>
           )}
 
-          {/* 3. Yaqin to'lovlar */}
           {groupedDebtors.upcoming.length > 0 && (
-            <Box mb={3}>
-              <Paper
-                sx={{
-                  p: 2,
-                  mb: 2,
-                  borderRadius: borderRadius.lg,
-                  background:
-                    "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
-                  color: "white",
-                  boxShadow: shadows.colored("rgba(240, 147, 251, 0.3)"),
-                }}>
-                <Box display="flex" alignItems="center" gap={1.5}>
-                  <TrendingUp size={24} />
-                  <Box>
-                    <Typography variant="h6" fontWeight={700}>
-                      YAQIN TO'LOVLAR
-                    </Typography>
-                    <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                      {groupedDebtors.upcoming.length} ta to'lov
-                    </Typography>
-                  </Box>
-                </Box>
-              </Paper>
-              <List disablePadding>
-                {groupedDebtors.upcoming.map((contract) => (
-                  <ContractDebtorItem
-                    key={contract._id}
-                    contract={contract}
-                    onClick={handleContractClick}
-                  />
-                ))}
-              </List>
+            <Box>
+              <SectionHeader
+                icon={<TrendingUp size={15} />}
+                label="YAQIN TO'LOVLAR"
+                count={groupedDebtors.upcoming.length}
+                accentColor="#8B5CF6"
+              />
+              {groupedDebtors.upcoming.map((contract) => (
+                <ContractDebtorItem
+                  key={contract._id}
+                  contract={contract}
+                  onClick={handleContractClick}
+                />
+              ))}
             </Box>
           )}
 
-          {/* 4. Kechikkan to'lovlar */}
           {groupedDebtors.overdue.length > 0 && (
-            <Box mb={3}>
-              <Paper
-                sx={{
-                  p: 2,
-                  mb: 2,
-                  borderRadius: borderRadius.lg,
-                  background:
-                    "linear-gradient(135deg, #fa709a 0%, #fee140 100%)",
-                  color: "white",
-                  boxShadow: shadows.colored("rgba(250, 112, 154, 0.3)"),
-                }}>
-                <Box display="flex" alignItems="center" gap={1.5}>
-                  <AlertCircle size={24} />
-                  <Box>
-                    <Typography variant="h6" fontWeight={700}>
-                      KECHIKKAN TO'LOVLAR
-                    </Typography>
-                    <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                      {groupedDebtors.overdue.length} ta to'lov
-                    </Typography>
-                  </Box>
-                </Box>
-              </Paper>
-              <List disablePadding>
-                {groupedDebtors.overdue.map((contract) => (
-                  <ContractDebtorItem
-                    key={contract._id}
-                    contract={contract}
-                    onClick={handleContractClick}
-                  />
-                ))}
-              </List>
+            <Box>
+              <SectionHeader
+                icon={<AlertCircle size={15} />}
+                label="KECHIKKAN TO'LOVLAR"
+                count={groupedDebtors.overdue.length}
+                accentColor="#EF4444"
+              />
+              {groupedDebtors.overdue.map((contract) => (
+                <ContractDebtorItem
+                  key={contract._id}
+                  contract={contract}
+                  onClick={handleContractClick}
+                />
+              ))}
             </Box>
           )}
 
-          {/* Bo'sh holat */}
           {groupedDebtors.allTotal === 0 && (
-            <Paper
+            <Box
               sx={{
-                p: 3,
                 textAlign: "center",
-                borderRadius: borderRadius.lg,
-                bgcolor: "grey.50",
+                py: 6,
+                px: 3,
+                bgcolor: "white",
+                borderRadius: "16px",
+                border: "1px solid #E2E8F0",
               }}>
-              <Typography variant="h6" color="text.secondary">
+              <AlertTriangle size={40} color="#CBD5E1" />
+              <Typography
+                sx={{
+                  mt: 1.5,
+                  fontSize: "0.9rem",
+                  color: "#94A3B8",
+                  fontWeight: 500,
+                }}>
                 Qarzdor shartnomalar topilmadi
               </Typography>
-            </Paper>
+            </Box>
           )}
         </Box>
       )}
 
-      {/* "Kechikkan" yoki "Tasdiq kutilmoqda" — tekis ro'yxat */}
-      {!groupedDebtors.showGrouped && (
-        groupedDebtors.displayData.length > 0 ?
-          <List disablePadding>
+      {/* ── Filtered flat list ── */}
+      {!groupedDebtors.showGrouped &&
+        (groupedDebtors.displayData.length > 0 ?
+          <Box>
             {groupedDebtors.displayData.map((contract) => (
               <ContractDebtorItem
                 key={contract._id}
@@ -641,26 +589,49 @@ export default function DebtorsPage({ activeTabIndex, index }: TabPageProps) {
                 onClick={handleContractClick}
               />
             ))}
-          </List>
-        : <Paper
+          </Box>
+        : <Box
             sx={{
-              p: 3,
               textAlign: "center",
-              borderRadius: borderRadius.lg,
-              bgcolor: "grey.50",
+              py: 6,
+              px: 3,
+              bgcolor: "white",
+              borderRadius: "16px",
+              border: "1px solid #E2E8F0",
             }}>
-            <Typography variant="h6" color="text.secondary" gutterBottom>
+            <Box
+              sx={{
+                width: 56,
+                height: 56,
+                borderRadius: "50%",
+                bgcolor: "#F1F5F9",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                mx: "auto",
+                mb: 1.5,
+              }}>
               {filterType === "overdue" ?
-                "Kechikkan to'lovlar topilmadi"
-              : "Tasdiq kutilmoqda to'lovlar topilmadi"}
+                <XCircle size={28} color="#CBD5E1" />
+              : <Clock size={28} color="#CBD5E1" />}
+            </Box>
+            <Typography
+              sx={{
+                fontSize: "0.9rem",
+                fontWeight: 600,
+                color: "#475569",
+                mb: 0.5,
+              }}>
+              {filterType === "overdue" ?
+                "Kechikkan to'lovlar yo'q"
+              : "Tasdiq kutilmoqda to'lov yo'q"}
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            <Typography sx={{ fontSize: "0.78rem", color: "#94A3B8" }}>
               {filterType === "overdue" ?
-                "Barcha to'lovlar o'z vaqtida amalga oshirilmoqda"
+                "Barcha to'lovlar o'z vaqtida"
               : "Hozircha kassa tasdiqini kutayotgan to'lov yo'q"}
             </Typography>
-          </Paper>
-      )}
+          </Box>)}
 
       <CustomerDialog
         open={!!selectedCustomer}

@@ -1,20 +1,83 @@
-import { Box, Divider, Typography, Grid } from "@mui/material";
+import { Box, CircularProgress, Typography } from "@mui/material";
 import { FC, useEffect } from "react";
-import { User, Phone, MapPin, DollarSign, CheckCircle, AlertCircle, Clock } from "lucide-react";
+import {
+  User,
+  Phone,
+  MapPin,
+  DollarSign,
+  CheckCircle,
+  AlertCircle,
+  Clock,
+  TrendingUp,
+} from "lucide-react";
 import { useAppDispatch } from "../../hooks/useAppDispatch";
 import { getCustomer } from "../../store/actions/customerActions";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store";
-import { borderRadius, shadows } from "../../theme/colors";
 
 interface IProps {
   customerId: string;
 }
 
+interface InfoRowProps {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  iconBg: string;
+  valueColor?: string;
+}
+
+const InfoRow: FC<InfoRowProps> = ({ icon, label, value, iconBg, valueColor = "#1E293B" }) => (
+  <Box
+    sx={{
+      display: "flex",
+      alignItems: "center",
+      gap: 1.5,
+      p: 1.5,
+      bgcolor: "white",
+      borderRadius: "12px",
+      border: "1px solid #F1F5F9",
+      boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+    }}
+  >
+    <Box
+      sx={{
+        width: 38,
+        height: 38,
+        borderRadius: "11px",
+        bgcolor: iconBg,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        flexShrink: 0,
+      }}
+    >
+      {icon}
+    </Box>
+    <Box sx={{ flex: 1, minWidth: 0 }}>
+      <Typography sx={{ fontSize: "0.65rem", color: "#94A3B8", mb: 0.2 }}>
+        {label}
+      </Typography>
+      <Typography
+        sx={{
+          fontSize: "0.875rem",
+          fontWeight: 700,
+          color: valueColor,
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {value}
+      </Typography>
+    </Box>
+  </Box>
+);
+
 const DialogTabCustomerInfo: FC<IProps> = ({ customerId }) => {
   const dispatch = useAppDispatch();
   const { customerDetails, isLoading } = useSelector(
-    (state: RootState) => state.customer
+    (state: RootState) => state.customer,
   );
 
   useEffect(() => {
@@ -24,7 +87,6 @@ const DialogTabCustomerInfo: FC<IProps> = ({ customerId }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [customerId]);
 
-  // Loading holati
   if (isLoading) {
     return (
       <Box
@@ -32,37 +94,31 @@ const DialogTabCustomerInfo: FC<IProps> = ({ customerId }) => {
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
-          minHeight: "300px",
+          minHeight: "240px",
         }}
       >
-        <Box textAlign="center">
-          <Typography variant="h6" color="primary.main" mb={2}>
-            Yuklanmoqda...
-          </Typography>
-        </Box>
+        <CircularProgress size={28} sx={{ color: "#4F46E5" }} />
       </Box>
     );
   }
 
-  // Ma'lumot yo'q holati
   if (!customerDetails) {
     return (
       <Box
         sx={{
-          p: 3,
+          p: 4,
           textAlign: "center",
-          minHeight: "300px",
+          minHeight: "240px",
           display: "flex",
           flexDirection: "column",
           justifyContent: "center",
           alignItems: "center",
+          gap: 1,
         }}
       >
-        <Typography variant="h6" color="error.main" mb={2}>
+        <AlertCircle size={36} color="#CBD5E1" />
+        <Typography sx={{ fontSize: "0.88rem", color: "#94A3B8" }}>
           Ma'lumot topilmadi
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Mijoz ma'lumotlari yuklanmadi yoki xatolik yuz berdi.
         </Typography>
       </Box>
     );
@@ -78,178 +134,124 @@ const DialogTabCustomerInfo: FC<IProps> = ({ customerId }) => {
     delayDays,
   } = customerDetails;
 
+  const delayColor =
+    (delayDays || 0) > 30
+      ? "#EF4444"
+      : (delayDays || 0) > 7
+        ? "#F59E0B"
+        : "#10B981";
+
   return (
-    <Box sx={{ p: 2 }}>
-      <Grid container spacing={2}>
-        {/* Ism - har doim bor */}
-        <InfoCard 
-          icon={<User size={20} />} 
-          label="Ism" 
-          value={fullName} 
+    <Box sx={{ p: 2, maxWidth: 600, mx: "auto" }}>
+      {/* ── Section: Contact info ── */}
+      <Box display="flex" alignItems="center" gap={0.75} mb={1.25}>
+        <Box sx={{ width: 3.5, height: 18, borderRadius: "4px", bgcolor: "#4F46E5" }} />
+        <Typography sx={{ fontSize: "0.75rem", fontWeight: 700, color: "#334155" }}>
+          Shaxsiy ma'lumotlar
+        </Typography>
+      </Box>
+
+      <Box display="flex" flexDirection="column" gap={1} mb={2.5}>
+        <InfoRow
+          icon={<User size={17} color="#4F46E5" />}
+          label="To'liq ism"
+          value={fullName}
+          iconBg="#EEF2FF"
         />
-        
-        {/* Telefon - faqat agar bor bo'lsa */}
         {phoneNumber && phoneNumber.trim() && (
-          <InfoCard 
-            icon={<Phone size={20} />} 
-            label="Telefon" 
-            value={phoneNumber} 
+          <InfoRow
+            icon={<Phone size={17} color="#0EA5E9" />}
+            label="Telefon"
+            value={phoneNumber}
+            iconBg="#F0F9FF"
           />
         )}
-        
-        {/* Manzil - faqat agar bor bo'lsa */}
         {address && address.trim() && (
-          <InfoCard 
-            icon={<MapPin size={20} />} 
-            label="Manzil" 
-            value={address} 
+          <InfoRow
+            icon={<MapPin size={17} color="#F59E0B" />}
+            label="Manzil"
+            value={address}
+            iconBg="#FFFBEB"
           />
         )}
-      </Grid>
+      </Box>
 
-      <Divider sx={{ my: 2.5 }} />
+      {/* ── Section: Finance ── */}
+      <Box display="flex" alignItems="center" gap={0.75} mb={1.25}>
+        <Box sx={{ width: 3.5, height: 18, borderRadius: "4px", bgcolor: "#10B981" }} />
+        <Typography sx={{ fontSize: "0.75rem", fontWeight: 700, color: "#334155" }}>
+          Moliyaviy holat
+        </Typography>
+      </Box>
 
-      <Grid container spacing={2}>
-        <InfoCard
-          icon={<DollarSign size={20} />}
+      <Box display="flex" flexDirection="column" gap={1} mb={2}>
+        <InfoRow
+          icon={<DollarSign size={17} color="#4F46E5" />}
           label="Jami qarz"
           value={`${totalDebt.toLocaleString()} $`}
-          color="primary.main"
+          iconBg="#EEF2FF"
+          valueColor="#4F46E5"
         />
-        <InfoCard
-          icon={<CheckCircle size={20} />}
+        <InfoRow
+          icon={<CheckCircle size={17} color="#10B981" />}
           label="To'langan"
           value={`${totalPaid.toLocaleString()} $`}
-          color="success.main"
+          iconBg="#D1FAE5"
+          valueColor="#10B981"
         />
-        <InfoCard
-          icon={<AlertCircle size={20} />}
+        <InfoRow
+          icon={<TrendingUp size={17} color="#EF4444" />}
           label="Qoldiq"
           value={`${remainingDebt.toLocaleString()} $`}
-          color="error.main"
+          iconBg="#FEE2E2"
+          valueColor={remainingDebt > 0 ? "#EF4444" : "#10B981"}
         />
-        
-        {/* Kechikish - faqat agar bor bo'lsa */}
-        {delayDays !== undefined && delayDays > 0 && (
-          <Grid size={{ xs: 12 }}>
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 1.5,
-                p: 2,
-                borderRadius: borderRadius.md,
-                background:
-                  delayDays > 30
-                    ? "rgba(239, 68, 68, 0.1)"
-                    : delayDays > 7
-                    ? "rgba(245, 158, 11, 0.1)"
-                    : "rgba(16, 185, 129, 0.1)",
-                border: "2px solid",
-                borderColor:
-                  delayDays > 30
-                    ? "error.main"
-                    : delayDays > 7
-                    ? "warning.main"
-                    : "success.main",
-                boxShadow: shadows.sm,
-              }}
-            >
-              <Box
-                sx={{
-                  p: 1,
-                  bgcolor: delayDays > 30
-                    ? "error.main"
-                    : delayDays > 7
-                    ? "warning.main"
-                    : "success.main",
-                  borderRadius: borderRadius.sm,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Clock size={20} color="white" />
-              </Box>
-              <Box flex={1}>
-                <Typography variant="caption" color="text.secondary" fontWeight={600}>
-                  Kechikish
-                </Typography>
-                <Typography
-                  variant="h6"
-                  fontWeight={700}
-                  color={
-                    delayDays > 30
-                      ? "error.main"
-                      : delayDays > 7
-                      ? "warning.main"
-                      : "success.main"
-                  }
-                >
-                  {delayDays} kun
-                </Typography>
-              </Box>
-            </Box>
-          </Grid>
-        )}
-      </Grid>
+      </Box>
+
+      {/* ── Delay warning ── */}
+      {delayDays !== undefined && delayDays > 0 && (
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 1.5,
+            p: 1.5,
+            borderRadius: "12px",
+            bgcolor:
+              delayDays > 30
+                ? "rgba(239,68,68,0.07)"
+                : delayDays > 7
+                  ? "rgba(245,158,11,0.07)"
+                  : "rgba(16,185,129,0.07)",
+            border: `1.5px solid ${delayColor}30`,
+          }}
+        >
+          <Box
+            sx={{
+              width: 38,
+              height: 38,
+              borderRadius: "11px",
+              bgcolor: `${delayColor}15`,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+            }}
+          >
+            <Clock size={17} color={delayColor} />
+          </Box>
+          <Box>
+            <Typography sx={{ fontSize: "0.65rem", color: "#94A3B8", mb: 0.2 }}>
+              Kechikish
+            </Typography>
+            <Typography sx={{ fontSize: "0.925rem", fontWeight: 800, color: delayColor }}>
+              {delayDays} kun
+            </Typography>
+          </Box>
+        </Box>
+      )}
     </Box>
   );
 };
 
 export default DialogTabCustomerInfo;
-
-const InfoCard: FC<{
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  color?: string;
-}> = ({ icon, label, value, color }) => (
-  <Grid size={{ xs: 12, sm: 6 }}>
-    <Box
-      sx={{
-        display: "flex",
-        alignItems: "center",
-        gap: 1.5,
-        bgcolor: "background.paper",
-        border: "1px solid",
-        borderColor: "divider",
-        borderRadius: borderRadius.md,
-        p: 2,
-        boxShadow: shadows.sm,
-        transition: "all 0.2s ease",
-        "&:hover": {
-          boxShadow: shadows.md,
-          borderColor: color || "primary.light",
-        },
-      }}
-    >
-      <Box
-        sx={{
-          p: 1,
-          bgcolor: color ? `${color}15` : "primary.lighter",
-          borderRadius: borderRadius.sm,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          color: color || "primary.main",
-        }}
-      >
-        {icon}
-      </Box>
-      <Box flex={1}>
-        <Typography variant="caption" color="text.secondary" fontWeight={600}>
-          {label}
-        </Typography>
-        <Typography
-          variant="body1"
-          fontWeight={700}
-          color={color || "text.primary"}
-          sx={{ mt: 0.25 }}
-        >
-          {value}
-        </Typography>
-      </Box>
-    </Box>
-  </Grid>
-);

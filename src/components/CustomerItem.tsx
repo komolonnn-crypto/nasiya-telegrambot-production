@@ -1,17 +1,9 @@
 import { memo } from "react";
-import {
-  ListItemButton,
-  ListItemText,
-  Avatar,
-  Typography,
-  Box,
-  Chip,
-} from "@mui/material";
+
+import { Box, Typography } from "@mui/material";
 import { motion } from "framer-motion";
-import { Phone, Clock, AlertCircle } from "lucide-react";
+import { Phone, Clock } from "lucide-react";
 import { ICustomer } from "../types/ICustomer";
-import { borderRadius, shadows } from "../theme/colors";
-import { responsive } from "../theme/responsive";
 
 interface CustomerListItemProps {
   customer: ICustomer;
@@ -19,171 +11,158 @@ interface CustomerListItemProps {
   showDebtBadge?: boolean;
 }
 
-const MotionListItemButton = motion(ListItemButton);
+const MotionBox = motion(Box);
 
-const CustomerListItem: React.FC<CustomerListItemProps> = memo(({
-  customer,
-  onClick,
-  showDebtBadge = false,
-}) => {
-  const getDelayColor = (days: number) => {
-    if (days > 30) return "error.main";
-    if (days > 7) return "warning.main";
-    return "success.main";
-  };
+const CustomerListItem: React.FC<CustomerListItemProps> = memo(
+  ({ customer, onClick, showDebtBadge = false }) => {
+    const getDelayColor = (days: number) => {
+      if (days > 30) return "#EF4444";
+      if (days > 7) return "#F59E0B";
+      return "#10B981";
+    };
 
-  // Smart name truncation
-  const getDisplayName = (fullName: string) => {
-    if (fullName.length > 20) {
-      const parts = fullName.split(' ');
-      if (parts.length > 1) {
-        return `${parts[0]} ${parts[parts.length - 1].charAt(0)}.`;
+    const getInitials = (name: string) => {
+      const parts = name.trim().split(" ");
+      if (parts.length >= 2)
+        return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+      return name.slice(0, 2).toUpperCase();
+    };
+
+    const getDisplayName = (fullName: string) => {
+      if (fullName.length > 22) {
+        const parts = fullName.split(" ");
+        if (parts.length > 1)
+          return `${parts[0]} ${parts[parts.length - 1].charAt(0)}.`;
+        return `${fullName.slice(0, 20)}…`;
       }
-    }
-    return fullName;
-  };
+      return fullName;
+    };
 
-  // Format phone number for mobile
-  const formatPhone = (phone: string) => {
-    if (phone.length > 13) {
-      return `${phone.slice(0, 13)}...`;
-    }
-    return phone;
-  };
+    const formatPhone = (phone: string) =>
+      phone.length > 13 ? `${phone}` : phone;
 
-  return (
-    <MotionListItemButton
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.2 }}
-      whileHover={{ scale: 1.005 }}
-      whileTap={{ scale: 0.995 }}
-      onClick={() => onClick(customer)}
-      sx={{
-        borderRadius: borderRadius.md,
-        mb: 1.5,
-        px: responsive.spacing.container,
-        py: { xs: 1.5, sm: 2 },
-        bgcolor: "background.paper",
-        border: showDebtBadge ? "2px solid" : "1px solid",
-        borderColor: showDebtBadge ? "error.main" : "divider",
-        boxShadow: shadows.sm,
-        transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-        "&:hover": {
-          bgcolor: "background.paper",
-          borderColor: showDebtBadge ? "error.dark" : "primary.main",
-          boxShadow: shadows.md,
-        },
-      }}
-    >
-      {/* Avatar - responsive sizing */}
-      <Avatar
+    return (
+      <MotionBox
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.2 }}
+        whileTap={{ scale: 0.99 }}
+        onClick={() => onClick(customer)}
         sx={{
-          mr: responsive.spacing.gap,
-          width: responsive.avatar.medium.xs,
-          height: responsive.avatar.medium.xs,
-          bgcolor: showDebtBadge ? "error.main" : "primary.main",
-          fontSize: responsive.typography.body1.xs,
-          fontWeight: 700,
-          boxShadow: shadows.sm,
-        }}
-      >
-        {customer.fullName.charAt(0)}
-      </Avatar>
+          display: "flex",
+          alignItems: "center",
+          gap: 1.5,
+          px: 1.75,
+          py: 1.25,
+          mb: 1,
+          bgcolor: "white",
+          borderRadius: "14px",
+          border:
+            showDebtBadge ?
+              "1.5px solid #FECACA"
+            : "1px solid rgba(0,0,0,0.05)",
+          boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+          cursor: "pointer",
+          transition: "all 0.2s",
+          "&:hover": {
+            boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+            borderColor: showDebtBadge ? "#EF4444" : "#4F46E5",
+            transform: "translateY(-1px)",
+          },
+        }}>
+        {/* Avatar */}
+        <Box
+          sx={{
+            width: 44,
+            height: 44,
+            borderRadius: "20px",
+            bgcolor: showDebtBadge ? "#FEE2E2" : "#EEF2FF",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+            color: showDebtBadge ? "#EF4444" : "#4F46E5",
+            fontSize: "0.82rem",
+            fontWeight: 800,
+          }}>
+          {getInitials(customer.fullName)}
+        </Box>
 
-      <ListItemText
-        primary={
-          <Box 
-            display="flex" 
-            alignItems="center" 
-            gap={1} 
-            mb={0.5}
-            sx={{ 
-              flexWrap: { xs: "wrap", sm: "nowrap" }, // Wrap on mobile
-              minHeight: { xs: 24, sm: "auto" }
-            }}
-          >
-            {/* Name - responsive */}
-            <Typography 
-              fontWeight={700} 
-              color="text.primary"
+        {/* Info */}
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Box
+            display="flex"
+            alignItems="center"
+            justifyContent="space-between"
+            gap={1}>
+            <Typography
               sx={{
-                fontSize: responsive.typography.body1,
-                lineHeight: 1.3,
-                flex: 1,
-                minWidth: { xs: "120px", sm: "auto" }
-              }}
-            >
+                fontSize: "0.875rem",
+                fontWeight: 700,
+                color: "#1E293B",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}>
               {getDisplayName(customer.fullName)}
             </Typography>
-            
-            {/* Debt badge - responsive */}
+
             {showDebtBadge && (
-              <Chip
-                icon={<AlertCircle size={responsive.icon.small.xs} />}
-                label="QARZDOR"
-                size="small"
-                color="error"
+              <Box
                 sx={{
-                  height: { xs: 20, sm: 22 },
-                  fontSize: responsive.typography.caption,
-                  fontWeight: 700,
-                  "& .MuiChip-icon": { 
-                    ml: 0.5,
-                    width: responsive.icon.small.xs,
-                    height: responsive.icon.small.xs,
-                  },
-                  "& .MuiChip-label": {
-                    px: { xs: 0.5, sm: 1 }
-                  }
-                }}
-              />
+                  px: 0.9,
+                  py: 0.2,
+                  borderRadius: "20px",
+                  bgcolor: "#FEE2E2",
+                  flexShrink: 0,
+                }}>
+                <Typography
+                  sx={{
+                    fontSize: "0.6rem",
+                    fontWeight: 700,
+                    color: "#EF4444",
+                  }}>
+                  QARZDOR
+                </Typography>
+              </Box>
             )}
           </Box>
-        }
-        secondary={
-          <Box display="flex" flexDirection="column" gap={0.5}>
-            {/* Phone number */}
-            <Box display="flex" alignItems="center" gap={0.5}>
-              <Phone size={responsive.icon.small.xs} color="#6B7280" />
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                sx={{
-                  fontSize: responsive.typography.body2,
-                  lineHeight: 1.3,
-                }}
-              >
-                {formatPhone(customer.phoneNumber)}
+
+          <Box display="flex" alignItems="center" gap={2} mt={1}>
+            <Box display="flex" alignItems="center" gap={1}>
+              <Phone size={14} color="#94A3B8" />
+              <Typography sx={{ fontSize: "0.72rem", color: "black" }}>
+                {formatPhone(
+                  customer.phoneNumber ?
+                    customer.phoneNumber
+                  : "not phone number",
+                )}
               </Typography>
             </Box>
-            
-            {/* Delay info */}
+
             {showDebtBadge &&
               customer.delayDays !== undefined &&
               customer.delayDays > 0 && (
-                <Box display="flex" alignItems="center" gap={0.5}>
-                  <Clock size={responsive.icon.small.xs} />
+                <Box display="flex" alignItems="center" gap={0.4}>
+                  <Clock size={12} color={getDelayColor(customer.delayDays)} />
                   <Typography
-                    variant="caption"
                     sx={{
+                      fontSize: "0.68rem",
                       fontWeight: 600,
                       color: getDelayColor(customer.delayDays),
-                      fontSize: responsive.typography.caption,
-                      lineHeight: 1.3,
-                    }}
-                  >
-                    {customer.delayDays > 99 ? "99+" : customer.delayDays} kun kechikkan
+                    }}>
+                    {customer.delayDays > 99 ? "99+" : customer.delayDays} kun
+                    kech
                   </Typography>
                 </Box>
               )}
           </Box>
-        }
-      />
-    </MotionListItemButton>
-  );
-});
+        </Box>
+      </MotionBox>
+    );
+  },
+);
 
-CustomerListItem.displayName = 'CustomerListItem';
+CustomerListItem.displayName = "CustomerListItem";
 
 export default CustomerListItem;

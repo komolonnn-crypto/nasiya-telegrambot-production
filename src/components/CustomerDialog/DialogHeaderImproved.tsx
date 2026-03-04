@@ -1,5 +1,12 @@
-import { Avatar, Box, Typography, useMediaQuery, useTheme } from "@mui/material";
 import { FC } from "react";
+
+import {
+  Avatar,
+  Box,
+  Typography,
+  useMediaQuery,
+  useTheme,
+} from "@mui/material";
 import { ArrowLeft, MoreVertical } from "lucide-react";
 import { ICustomer } from "../../types/ICustomer";
 import { useAppDispatch } from "../../hooks/useAppDispatch";
@@ -12,10 +19,7 @@ interface IProps {
   onClose: () => void;
 }
 
-const DialogHeaderImproved: FC<IProps> = ({
-  customer,
-  onClose,
-}) => {
+const DialogHeaderImproved: FC<IProps> = ({ customer, onClose }) => {
   const dispatch = useAppDispatch();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -28,7 +32,7 @@ const DialogHeaderImproved: FC<IProps> = ({
   // Smart name display for mobile
   const getDisplayName = (fullName: string) => {
     if (isMobile && fullName.length > 15) {
-      const parts = fullName.split(' ');
+      const parts = fullName.split(" ");
       if (parts.length > 1) {
         return `${parts[0]} ${parts[parts.length - 1].charAt(0)}.`;
       }
@@ -45,10 +49,10 @@ const DialogHeaderImproved: FC<IProps> = ({
   };
 
   return (
-    <Box 
-      display="flex" 
-      alignItems="center" 
-      gap={responsive.spacing.gap} 
+    <Box
+      display="flex"
+      alignItems="center"
+      gap={responsive.spacing.gap}
       mb={3}
       sx={{
         position: "sticky",
@@ -60,8 +64,7 @@ const DialogHeaderImproved: FC<IProps> = ({
         px: 2,
         borderBottom: "1px solid",
         borderColor: "divider",
-      }}
-    >
+      }}>
       {/* Back button - always icon on mobile */}
       <SmartButton
         variant="text"
@@ -69,16 +72,15 @@ const DialogHeaderImproved: FC<IProps> = ({
         icon={<ArrowLeft size={responsive.icon.medium.xs} />}
         tooltipText="Orqaga"
         iconOnly={isMobile}
-        size="medium"
-      >
+        size="medium">
         {!isMobile ? "Orqaga" : ""}
       </SmartButton>
 
       {/* Customer info - responsive layout */}
-      <Box 
-        width="100%" 
-        display="flex" 
-        justifyContent="space-between" 
+      <Box
+        width="100%"
+        display="flex"
+        justifyContent="space-between"
         alignItems="center"
         sx={{ minWidth: 0 }} // Allow text truncation
       >
@@ -92,15 +94,14 @@ const DialogHeaderImproved: FC<IProps> = ({
               bgcolor: "primary.main",
               fontSize: responsive.typography.body1,
               fontWeight: 700,
-            }}
-          >
+            }}>
             {customer.fullName.charAt(0)}
           </Avatar>
-          
+
           <Box sx={{ minWidth: 0, flex: 1 }}>
             {/* Name - responsive */}
-            <Typography 
-              variant="h6" 
+            <Typography
+              variant="h6"
               color="primary.main"
               sx={{
                 fontSize: responsive.typography.h6,
@@ -109,14 +110,13 @@ const DialogHeaderImproved: FC<IProps> = ({
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 whiteSpace: "nowrap",
-              }}
-            >
+              }}>
               {getDisplayName(customer.fullName)}
             </Typography>
-            
+
             {/* Phone - responsive */}
-            <Typography 
-              variant="body2" 
+            <Typography
+              variant="body2"
               color="text.secondary"
               sx={{
                 fontSize: responsive.typography.body2,
@@ -124,8 +124,7 @@ const DialogHeaderImproved: FC<IProps> = ({
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 whiteSpace: "nowrap",
-              }}
-            >
+              }}>
               {getDisplayPhone(customer.phoneNumber)}
             </Typography>
           </Box>

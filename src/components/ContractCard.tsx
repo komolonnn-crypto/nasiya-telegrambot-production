@@ -1,10 +1,8 @@
 import { FC } from "react";
-import { Paper, Typography, Box, Chip, useMediaQuery } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
+import { Box, Typography, Chip } from "@mui/material";
 import { motion } from "framer-motion";
-import { Calendar, TrendingUp, CheckCircle, AlertTriangle } from "lucide-react";
+import { Calendar, TrendingUp, CheckCircle, AlertTriangle, Package } from "lucide-react";
 import { ICustomerContract } from "../types/ICustomer";
-import { borderRadius, shadows } from "../theme/colors";
 
 interface ContractCardProps {
   contract: ICustomerContract;
@@ -12,299 +10,246 @@ interface ContractCardProps {
   onClick?: () => void;
 }
 
-const MotionPaper = motion(Paper);
+const MotionBox = motion(Box);
 
-const ContractCard: FC<ContractCardProps> = ({
-  contract,
-  variant = "default",
-  onClick,
-}) => {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+const variantConfig = {
+  default: {
+    border: "1px solid #E2E8F0",
+    bg: "white",
+    accentColor: "#4F46E5",
+    accentBg: "#EEF2FF",
+    badge: null,
+  },
+  debtor: {
+    border: "1.5px solid #FECACA",
+    bg: "white",
+    accentColor: "#EF4444",
+    accentBg: "#FEF2F2",
+    badge: { label: "Qarzdor", icon: AlertTriangle, color: "#EF4444", bg: "#FEF2F2" },
+  },
+  paid: {
+    border: "1.5px solid #A7F3D0",
+    bg: "#F0FDF4",
+    accentColor: "#10B981",
+    accentBg: "#D1FAE5",
+    badge: { label: "To'langan", icon: CheckCircle, color: "#10B981", bg: "#D1FAE5" },
+  },
+};
 
-  const totalDebt =
-    (contract.monthlyPayment || 0) * (contract.durationMonths || 0);
+const ContractCard: FC<ContractCardProps> = ({ contract, variant = "default", onClick }) => {
+  const cfg = variantConfig[variant];
+
+  const totalDebt = (contract.monthlyPayment || 0) * (contract.durationMonths || 0);
   const totalPaid = contract.totalPaid || 0;
   const remainingDebt = contract.remainingDebt || 0;
-
-  const getVariantStyles = () => {
-    switch (variant) {
-      case "debtor":
-        return {
-          borderColor: "error.main",
-          borderWidth: "2px",
-          bgcolor: "background.paper",
-        };
-      case "paid":
-        return {
-          borderColor: "success.main",
-          borderWidth: "2px",
-          bgcolor: "success.lighter",
-        };
-      default:
-        return {
-          borderColor: "divider",
-          borderWidth: "1px",
-          bgcolor: "background.paper",
-        };
-    }
-  };
+  const paidPct = totalDebt > 0 ? Math.round((totalPaid / totalDebt) * 100) : 0;
 
   return (
-    <MotionPaper
-      initial={{ opacity: 0, y: 10 }}
+    <MotionBox
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2 }}
-      whileHover={onClick ? { scale: 1.01, y: -2 } : {}}
       whileTap={onClick ? { scale: 0.99 } : {}}
       onClick={onClick}
       sx={{
-        p: { xs: 1.5, sm: 2, md: 2.5 },
-        mb: 2,
-        border: "solid",
-        ...getVariantStyles(),
-        borderRadius: borderRadius.md,
+        mb: 1.5,
+        p: 1.75,
+        bgcolor: cfg.bg,
+        border: cfg.border,
+        borderRadius: "16px",
         cursor: onClick ? "pointer" : "default",
-        boxShadow: shadows.sm,
-        transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-        "&:hover": onClick
-          ? {
-              boxShadow: shadows.md,
-            }
-          : {},
+        boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+        transition: "all 0.2s",
+        ...(onClick && {
+          "&:hover": {
+            boxShadow: "0 4px 14px rgba(0,0,0,0.1)",
+            transform: "translateY(-1px)",
+          },
+        }),
       }}
     >
-      {/* Mahsulot nomi va status */}
-      <Box
-        display="flex"
-        alignItems="flex-start"
-        justifyContent="space-between"
-        mb={2.5}
-        gap={1}
-      >
+      {/* ── Top row: product + badge ── */}
+      <Box display="flex" alignItems="flex-start" justifyContent="space-between" gap={1} mb={1.25}>
         <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Box display="flex" alignItems="center" gap={1} mb={0.5}>
-            {/* Day badge - NEW */}
+          <Box display="flex" alignItems="center" gap={0.75} mb={0.4}>
+            {/* Day chip */}
             {contract.startDate && (
-              <Chip
-                label={new Date(contract.startDate).getDate().toString().padStart(2, "0")}
-                size="small"
+              <Box
                 sx={{
-                  height: { xs: 20, sm: 22 },
-                  minWidth: { xs: 26, sm: 30 },
-                  fontSize: { xs: "0.65rem", sm: "0.7rem" },
-                  fontWeight: 700,
-                  bgcolor: "primary.main",
-                  color: "white",
-                  "& .MuiChip-label": {
-                    px: { xs: 0.4, sm: 0.6 }
-                  }
+                  px: 0.75,
+                  py: 0.15,
+                  borderRadius: "6px",
+                  bgcolor: cfg.accentBg,
+                  flexShrink: 0,
                 }}
-              />
+              >
+                <Typography sx={{ fontSize: "0.7rem", fontWeight: 800, color: cfg.accentColor }}>
+                  {new Date(contract.startDate).getDate().toString().padStart(2, "0")}
+                </Typography>
+              </Box>
             )}
-            {/* ✅ YANGI: Shartnoma ID */}
+            {/* Contract ID */}
             {(contract as any).customId && (
-              <Chip
-                label={(contract as any).customId}
-                size="small"
+              <Box
                 sx={{
-                  height: { xs: 20, sm: 22 },
-                  fontSize: { xs: "0.65rem", sm: "0.7rem" },
-                  fontWeight: 700,
-                  bgcolor: "info.main",
-                  color: "white",
-                  "& .MuiChip-label": {
-                    px: { xs: 0.4, sm: 0.6 }
-                  }
+                  px: 0.75,
+                  py: 0.15,
+                  borderRadius: "6px",
+                  bgcolor: "#EEF2FF",
+                  flexShrink: 0,
                 }}
-              />
+              >
+                <Typography sx={{ fontSize: "0.62rem", fontWeight: 700, color: "#4F46E5" }}>
+                  {(contract as any).customId}
+                </Typography>
+              </Box>
             )}
+          </Box>
+
+          <Box display="flex" alignItems="center" gap={0.6}>
+            <Package size={14} color="#94A3B8" style={{ flexShrink: 0 }} />
             <Typography
-              variant="subtitle1"
-              fontWeight={700}
               sx={{
-                fontSize: { xs: "0.875rem", sm: "0.95rem", md: "1rem" },
-                lineHeight: 1.3,
-                wordWrap: "break-word",
+                fontSize: "0.875rem",
+                fontWeight: 700,
+                color: "#1E293B",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
               }}
             >
               {contract.productName}
             </Typography>
           </Box>
-          <Typography
-            variant="caption"
-            color="text.secondary"
-            sx={{
-              fontSize: { xs: "0.75rem", sm: "0.8rem", md: "0.875rem" },
-            }}
-          >
-            {contract.paidMonthsCount || 0}/{contract.durationMonths || 0} oy
-            to'langan
+
+          <Typography sx={{ fontSize: "0.7rem", color: "#94A3B8", mt: 0.3 }}>
+            {contract.paidMonthsCount || 0}/{contract.durationMonths || 0} oy to'langan
           </Typography>
         </Box>
-        {variant === "paid" && (
-          <Chip
-            icon={<CheckCircle size={14} />}
-            label="To'langan"
-            size="small"
-            color="success"
-            sx={{ fontWeight: 600, "& .MuiChip-icon": { ml: 0.5 } }}
-          />
-        )}
-        {variant === "debtor" && (
-          <Chip
-            icon={<AlertTriangle size={14} />}
-            label="Qarzdor"
-            size="small"
-            color="error"
-            sx={{ fontWeight: 600, "& .MuiChip-icon": { ml: 0.5 } }}
-          />
+
+        {cfg.badge && (
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 0.4,
+              px: 0.9,
+              py: 0.4,
+              borderRadius: "20px",
+              bgcolor: cfg.badge.bg,
+              flexShrink: 0,
+            }}
+          >
+            <cfg.badge.icon size={12} color={cfg.badge.color} />
+            <Typography sx={{ fontSize: "0.65rem", fontWeight: 700, color: cfg.badge.color }}>
+              {cfg.badge.label}
+            </Typography>
+          </Box>
         )}
       </Box>
 
-      {/* Narx ma'lumotlari */}
-      <Box
-        sx={{
-          display: "grid",
-          gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
-          gap: { xs: 1.5, sm: 2 },
-          mb: 2.5,
-        }}
-      >
+      {/* ── Info row: total debt + duration ── */}
+      <Box display="flex" gap={1} mb={1.5}>
         <Box
           sx={{
+            flex: 1,
             display: "flex",
             alignItems: "center",
-            gap: { xs: 0.5, sm: 1 },
-            p: { xs: 1, sm: 1.5 },
-            bgcolor: "rgba(17, 153, 142, 0.08)",
-            borderRadius: borderRadius.sm,
+            gap: 0.75,
+            p: 1,
+            bgcolor: `${cfg.accentColor}08`,
+            borderRadius: "10px",
           }}
         >
-          <TrendingUp size={isMobile ? 14 : 18} color="#11998e" />
+          <TrendingUp size={14} color={cfg.accentColor} />
           <Box>
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              display="block"
-              fontSize={{ xs: "0.65rem", sm: "0.75rem" }}
-            >
+            <Typography sx={{ fontSize: "0.6rem", color: "#94A3B8", lineHeight: 1.1 }}>
               Jami qarz
             </Typography>
-            <Typography
-              variant="body2"
-              fontWeight={700}
-              fontSize={{ xs: "0.75rem", sm: "0.875rem" }}
-            >
+            <Typography sx={{ fontSize: "0.8rem", fontWeight: 700, color: "#1E293B" }}>
               {totalDebt.toLocaleString()} $
             </Typography>
           </Box>
         </Box>
-
         <Box
           sx={{
+            flex: 1,
             display: "flex",
             alignItems: "center",
-            gap: { xs: 0.5, sm: 1 },
-            p: { xs: 1, sm: 1.5 },
-            bgcolor: "rgba(79, 172, 254, 0.08)",
-            borderRadius: borderRadius.sm,
+            gap: 0.75,
+            p: 1,
+            bgcolor: "#F0F9FF",
+            borderRadius: "10px",
           }}
         >
-          <Calendar size={isMobile ? 14 : 18} color="#4facfe" />
+          <Calendar size={14} color="#0EA5E9" />
           <Box>
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              display="block"
-              fontSize={{ xs: "0.65rem", sm: "0.75rem" }}
-            >
+            <Typography sx={{ fontSize: "0.6rem", color: "#94A3B8", lineHeight: 1.1 }}>
               Muddat
             </Typography>
-            <Typography
-              variant="body2"
-              fontWeight={700}
-              fontSize={{ xs: "0.75rem", sm: "0.875rem" }}
-            >
+            <Typography sx={{ fontSize: "0.8rem", fontWeight: 700, color: "#1E293B" }}>
               {contract.durationMonths} oy
             </Typography>
           </Box>
         </Box>
       </Box>
 
-      {/* Jami ma'lumotlar */}
-      <Box
-        sx={{
-          mt: 2,
-          pt: 2,
-          borderTop: "2px solid",
-          borderColor: "divider",
-          display: "grid",
-          gridTemplateColumns: { xs: "1fr 1fr 1fr", sm: "1fr 1fr 1fr" },
-          gap: { xs: 1, sm: 2 },
-        }}
-      >
-        <Box textAlign="center">
-          <Typography
-            variant="caption"
-            color="text.secondary"
-            display="block"
-            mb={0.5}
-            fontSize={{ xs: "0.65rem", sm: "0.75rem" }}
-          >
-            Jami
-          </Typography>
-          <Typography
-            variant="body1"
-            fontWeight={700}
-            color="text.primary"
-            fontSize={{ xs: "0.8rem", sm: "1rem" }}
-          >
-            {totalDebt.toLocaleString()} $
-          </Typography>
+      {/* ── Progress bar ── */}
+      <Box mb={1.25}>
+        <Box
+          sx={{
+            height: 5,
+            borderRadius: "4px",
+            bgcolor: "#F1F5F9",
+            overflow: "hidden",
+          }}
+        >
+          <Box
+            sx={{
+              height: "100%",
+              width: `${paidPct}%`,
+              bgcolor: cfg.accentColor,
+              borderRadius: "4px",
+              transition: "width 0.4s ease",
+            }}
+          />
         </Box>
-
-        <Box textAlign="center">
-          <Typography
-            variant="caption"
-            color="text.secondary"
-            display="block"
-            mb={0.5}
-            fontSize={{ xs: "0.65rem", sm: "0.75rem" }}
-          >
-            To'langan
+        <Box display="flex" justifyContent="space-between" mt={0.5}>
+          <Typography sx={{ fontSize: "0.62rem", color: "#94A3B8" }}>
+            {paidPct}% to'langan
           </Typography>
-          <Typography
-            variant="body1"
-            fontWeight={700}
-            color="success.main"
-            fontSize={{ xs: "0.8rem", sm: "1rem" }}
-          >
-            {totalPaid.toLocaleString()} $
-          </Typography>
-        </Box>
-
-        <Box textAlign="center">
-          <Typography
-            variant="caption"
-            color="text.secondary"
-            display="block"
-            mb={0.5}
-            fontSize={{ xs: "0.65rem", sm: "0.75rem" }}
-          >
-            Qarz
-          </Typography>
-          <Typography
-            variant="body1"
-            fontWeight={700}
-            color="error.main"
-            fontSize={{ xs: "0.8rem", sm: "1rem" }}
-          >
-            {remainingDebt.toLocaleString()} $
+          <Typography sx={{ fontSize: "0.62rem", color: "#94A3B8" }}>
+            {contract.monthlyPayment?.toLocaleString()} $/oy
           </Typography>
         </Box>
       </Box>
-    </MotionPaper>
+
+      {/* ── Bottom: totals ── */}
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr 1fr",
+          gap: 0.75,
+          pt: 1.25,
+          borderTop: "1px solid #F1F5F9",
+        }}
+      >
+        {[
+          { label: "Jami", value: totalDebt, color: "#475569" },
+          { label: "To'langan", value: totalPaid, color: "#10B981" },
+          { label: "Qarz", value: remainingDebt, color: remainingDebt > 0 ? "#EF4444" : "#10B981" },
+        ].map(({ label, value, color }) => (
+          <Box key={label} textAlign="center">
+            <Typography sx={{ fontSize: "0.6rem", color: "#94A3B8", mb: 0.2 }}>
+              {label}
+            </Typography>
+            <Typography sx={{ fontSize: "0.82rem", fontWeight: 800, color }}>
+              {value.toLocaleString()}$
+            </Typography>
+          </Box>
+        ))}
+      </Box>
+    </MotionBox>
   );
 };
 

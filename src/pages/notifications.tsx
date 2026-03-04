@@ -1,10 +1,28 @@
 import { useEffect } from "react";
 import { useSelector } from "react-redux";
-import { Box, Typography, Button, IconButton, Card, CardContent, Chip, Stack } from "@mui/material";
-import { Bell, CheckCheck, Trash2, Clock, CheckCircle, XCircle, RefreshCw, User, Calendar, TrendingUp, AlertTriangle, Package } from "lucide-react";
-import { 
-  AttachMoney, 
-} from "@mui/icons-material";
+import {
+  Box,
+  Typography,
+  Button,
+  IconButton,
+  Stack,
+  Chip,
+} from "@mui/material";
+import {
+  Bell,
+  CheckCheck,
+  Trash2,
+  Clock,
+  CheckCircle,
+  XCircle,
+  RefreshCw,
+  User,
+  DollarSign,
+  Calendar,
+  TrendingUp,
+  AlertTriangle,
+  Package,
+} from "lucide-react";
 import { useAlert } from "../components/AlertSystem";
 import { RootState } from "../store";
 import { useAppDispatch } from "../hooks/useAppDispatch";
@@ -26,7 +44,7 @@ export default function NotificationsPage({ activeTabIndex, index }: TabPageProp
   const dispatch = useAppDispatch();
   const { showConfirm, showError, showSuccess } = useAlert();
   const { notifications, unreadCount, isLoading } = useSelector(
-    (state: RootState) => state.notification
+    (state: RootState) => state.notification,
   );
 
   useEffect(() => {
@@ -35,36 +53,29 @@ export default function NotificationsPage({ activeTabIndex, index }: TabPageProp
     }
   }, [activeTabIndex, index, dispatch]);
 
-  const handleRefresh = () => {
-    dispatch(getNotifications());
-  };
-
-  const handleMarkAllAsRead = () => {
-    dispatch(markAllNotificationsAsRead());
-  };
+  const handleRefresh = () => dispatch(getNotifications());
+  const handleMarkAllAsRead = () => dispatch(markAllNotificationsAsRead());
 
   const handleDeleteAll = async () => {
     showConfirm({
-      type: 'delete',
-      title: 'Bildirishnomalarni o\'chirish',
-      message: 'Barcha bildirishnomalarni o\'chirishni xohlaysizmi? Bu amalni bekor qilib bo\'lmaydi.',
-      confirmText: 'O\'chirish',
-      cancelText: 'Bekor qilish',
+      type: "delete",
+      title: "Bildirishnomalarni o'chirish",
+      message: "Barcha bildirishnomalarni o'chirishni xohlaysizmi? Bu amalni bekor qilib bo'lmaydi.",
+      confirmText: "O'chirish",
+      cancelText: "Bekor qilish",
       onConfirm: async () => {
         try {
           await dispatch(deleteAllNotifications());
-          showSuccess('Barcha bildirishnomalar o\'chirildi', 'Muvaffaqiyat');
-        } catch (error) {
-          showError('Bildirishnomalarni o\'chirishda xatolik yuz berdi', 'Xatolik');
+          showSuccess("Barcha bildirishnomalar o'chirildi", "Muvaffaqiyat");
+        } catch {
+          showError("Bildirishnomalarni o'chirishda xatolik yuz berdi", "Xatolik");
         }
-      }
+      },
     });
   };
 
   const handleNotificationClick = (notificationId: string, isRead: boolean) => {
-    if (!isRead) {
-      dispatch(markNotificationAsRead(notificationId));
-    }
+    if (!isRead) dispatch(markNotificationAsRead(notificationId));
   };
 
   return (
@@ -73,49 +84,99 @@ export default function NotificationsPage({ activeTabIndex, index }: TabPageProp
         height: "100%",
         display: "flex",
         flexDirection: "column",
-        bgcolor: "background.default",
+        bgcolor: "#F8FAFC",
         overflow: "hidden",
       }}
     >
-      {/* Header */}
+      {/* ── Header ── */}
       <Box
         sx={{
-          p: 2,
-          borderBottom: 1,
-          borderColor: "divider",
-          bgcolor: "background.paper",
+          px: 2,
+          py: 1.5,
+          bgcolor: "white",
+          borderBottom: "1px solid rgba(0,0,0,0.06)",
+          boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
         }}
       >
         <Stack direction="row" alignItems="center" justifyContent="space-between">
-          <Stack direction="row" alignItems="center" spacing={1}>
-            <Bell size={24} />
-            <Typography variant="h6" sx={{ fontWeight: 600 }}>
-              Bildirishnomalar
-            </Typography>
-            {unreadCount > 0 && (
-              <Chip
-                label={unreadCount}
-                size="small"
-                color="error"
-                sx={{ height: 24, minWidth: 24 }}
-              />
-            )}
+          <Stack direction="row" alignItems="center" spacing={1.25}>
+            <Box
+              sx={{
+                width: 38,
+                height: 38,
+                borderRadius: "11px",
+                bgcolor: "#EEF2FF",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#4F46E5",
+              }}
+            >
+              <Bell size={19} />
+            </Box>
+            <Box>
+              <Stack direction="row" alignItems="center" spacing={0.75}>
+                <Typography sx={{ fontSize: "0.95rem", fontWeight: 700, color: "#1E293B" }}>
+                  Bildirishnomalar
+                </Typography>
+                {unreadCount > 0 && (
+                  <Box
+                    sx={{
+                      px: 0.9,
+                      py: 0.1,
+                      borderRadius: "20px",
+                      bgcolor: "#EF4444",
+                      minWidth: 20,
+                      textAlign: "center",
+                    }}
+                  >
+                    <Typography sx={{ fontSize: "0.65rem", fontWeight: 700, color: "white" }}>
+                      {unreadCount}
+                    </Typography>
+                  </Box>
+                )}
+              </Stack>
+              <Typography sx={{ fontSize: "0.68rem", color: "#94A3B8", fontWeight: 500 }}>
+                {notifications.length} ta bildirishnoma
+              </Typography>
+            </Box>
           </Stack>
 
-          <IconButton onClick={handleRefresh} disabled={isLoading}>
-            <RefreshCw size={20} />
+          <IconButton
+            onClick={handleRefresh}
+            disabled={isLoading}
+            size="small"
+            sx={{
+              color: "#64748B",
+              bgcolor: "#F1F5F9",
+              borderRadius: "10px",
+              width: 36,
+              height: 36,
+              "&:hover": { bgcolor: "#E2E8F0" },
+            }}
+          >
+            <RefreshCw size={17} />
           </IconButton>
         </Stack>
 
-        {/* Actions */}
         {notifications.length > 0 && (
-          <Stack direction="row" spacing={1} mt={2}>
+          <Stack direction="row" spacing={1} mt={1.25}>
             {unreadCount > 0 && (
               <Button
                 size="small"
                 variant="outlined"
-                startIcon={<CheckCheck size={16} />}
+                startIcon={<CheckCheck size={14} />}
                 onClick={handleMarkAllAsRead}
+                sx={{
+                  fontSize: "0.72rem",
+                  fontWeight: 600,
+                  borderRadius: "9px",
+                  borderColor: "#E2E8F0",
+                  color: "#475569",
+                  py: 0.5,
+                  px: 1.25,
+                  "&:hover": { borderColor: "#4F46E5", color: "#4F46E5", bgcolor: "#EEF2FF" },
+                }}
               >
                 Hammasini o'qilgan
               </Button>
@@ -124,8 +185,18 @@ export default function NotificationsPage({ activeTabIndex, index }: TabPageProp
               size="small"
               variant="outlined"
               color="error"
-              startIcon={<Trash2 size={16} />}
+              startIcon={<Trash2 size={14} />}
               onClick={handleDeleteAll}
+              sx={{
+                fontSize: "0.72rem",
+                fontWeight: 600,
+                borderRadius: "9px",
+                borderColor: "#FECACA",
+                color: "#EF4444",
+                py: 0.5,
+                px: 1.25,
+                "&:hover": { borderColor: "#EF4444", bgcolor: "#FEF2F2" },
+              }}
             >
               Hammasini o'chirish
             </Button>
@@ -133,8 +204,8 @@ export default function NotificationsPage({ activeTabIndex, index }: TabPageProp
         )}
       </Box>
 
-      {/* Notifications List */}
-      <Box sx={{ flex: 1, overflow: "auto", p: 2 }}>
+      {/* ── List ── */}
+      <Box sx={{ flex: 1, overflow: "auto", px: 1.5, py: 1.5 }}>
         {isLoading ? (
           <Box
             sx={{
@@ -142,9 +213,12 @@ export default function NotificationsPage({ activeTabIndex, index }: TabPageProp
               justifyContent: "center",
               alignItems: "center",
               height: "100%",
+              gap: 1.5,
+              flexDirection: "column",
             }}
           >
-            <Typography color="text.secondary">Yuklanmoqda...</Typography>
+            <RefreshCw size={28} color="#CBD5E1" />
+            <Typography sx={{ fontSize: "0.85rem", color: "#94A3B8" }}>Yuklanmoqda...</Typography>
           </Box>
         ) : notifications.length === 0 ? (
           <Box
@@ -154,168 +228,230 @@ export default function NotificationsPage({ activeTabIndex, index }: TabPageProp
               justifyContent: "center",
               alignItems: "center",
               height: "100%",
-              gap: 2,
+              gap: 1.5,
+              pb: 4,
             }}
           >
-            <Bell size={64} color="#ccc" />
-            <Typography variant="h6" color="text.secondary">
-              Bildirishnomalar yo'q
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              To'lovlar tasdiqlanganda bu yerda ko'rinadi
-            </Typography>
+            <Box
+              sx={{
+                width: 70,
+                height: 70,
+                borderRadius: "50%",
+                bgcolor: "#F1F5F9",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Bell size={32} color="#CBD5E1" />
+            </Box>
+            <Box textAlign="center">
+              <Typography sx={{ fontSize: "0.92rem", fontWeight: 600, color: "#475569" }}>
+                Bildirishnomalar yo'q
+              </Typography>
+              <Typography sx={{ fontSize: "0.78rem", color: "#94A3B8", mt: 0.5 }}>
+                To'lovlar tasdiqlanganda bu yerda ko'rinadi
+              </Typography>
+            </Box>
           </Box>
         ) : (
-          <Stack spacing={2}>
-            {notifications.map((notification) => (
-              <Card
-                key={notification._id}
-                onClick={() =>
-                  handleNotificationClick(notification._id, notification.isRead)
-                }
-                sx={{
-                  cursor: "pointer",
-                  border: notification.isRead ? 1 : 2,
-                  borderColor: notification.isRead
-                    ? "divider"
-                    : notification.type === "PAYMENT_APPROVED"
-                    ? "success.main"
-                    : "error.main",
-                  bgcolor: notification.isRead ? "background.paper" : "action.hover",
-                  transition: "all 0.2s",
-                  "&:hover": {
-                    transform: "translateY(-2px)",
-                    boxShadow: 2,
-                  },
-                }}
-              >
-                <CardContent>
-                  <Stack direction="row" spacing={2} alignItems="flex-start">
-                    {/* Icon */}
-                    <Box
-                      sx={{
-                        width: 40,
-                        height: 40,
-                        borderRadius: "50%",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        bgcolor:
-                          notification.type === "PAYMENT_APPROVED"
-                            ? "success.lighter"
-                            : "error.lighter",
-                      }}
-                    >
-                      {notification.type === "PAYMENT_APPROVED" ? (
-                        <CheckCircle
-                          size={24}
-                          color={notification.type === "PAYMENT_APPROVED" ? "#2e7d32" : "#d32f2f"}
-                        />
-                      ) : (
-                        <XCircle size={24} color="#d32f2f" />
-                      )}
-                    </Box>
+          <Stack spacing={1.25}>
+            {notifications.map((notification) => {
+              const isApproved = notification.type === "PAYMENT_APPROVED";
+              const accentColor = isApproved ? "#10B981" : "#EF4444";
+              const bgColor = isApproved ? "#F0FDF4" : "#FFF1F2";
+              const borderColor = isApproved ? "#BBF7D0" : "#FECACA";
 
-                    {/* Content */}
-                    <Box sx={{ flex: 1 }}>
-                      <Stack direction="row" justifyContent="space-between" alignItems="center">
-                        <Typography variant="subtitle2" fontWeight={600}>
-                          {notification.title}
-                        </Typography>
-                        {!notification.isRead && (
-                          <Box
+              const paymentType = (notification.data as any).paymentType;
+              const monthNumber = (notification.data as any).monthNumber;
+
+              return (
+                <Box
+                  key={notification._id}
+                  onClick={() => handleNotificationClick(notification._id, notification.isRead)}
+                  sx={{
+                    cursor: "pointer",
+                    bgcolor: notification.isRead ? "white" : bgColor,
+                    borderRadius: "16px",
+                    border: `1.5px solid ${notification.isRead ? "#E2E8F0" : borderColor}`,
+                    overflow: "hidden",
+                    transition: "all 0.2s",
+                    "&:hover": { transform: "translateY(-1px)", boxShadow: "0 4px 12px rgba(0,0,0,0.08)" },
+                    boxShadow: notification.isRead
+                      ? "0 1px 3px rgba(0,0,0,0.05)"
+                      : `0 2px 8px ${accentColor}20`,
+                  }}
+                >
+                  {/* Accent bar */}
+                  <Box sx={{ height: 3, bgcolor: accentColor }} />
+
+                  <Box sx={{ p: 1.5 }}>
+                    {/* Top row: icon + title + unread dot */}
+                    <Stack direction="row" alignItems="flex-start" spacing={1.25}>
+                      <Box
+                        sx={{
+                          width: 38,
+                          height: 38,
+                          borderRadius: "11px",
+                          bgcolor: `${accentColor}15`,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          color: accentColor,
+                          flexShrink: 0,
+                        }}
+                      >
+                        {isApproved ? <CheckCircle size={20} /> : <XCircle size={20} />}
+                      </Box>
+
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Stack direction="row" justifyContent="space-between" alignItems="center">
+                          <Typography
                             sx={{
-                              width: 8,
-                              height: 8,
-                              borderRadius: "50%",
-                              bgcolor: "primary.main",
+                              fontSize: "0.82rem",
+                              fontWeight: 700,
+                              color: "#1E293B",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                              maxWidth: "180px",
                             }}
-                          />
-                        )}
-                      </Stack>
-
-                      <Typography variant="body2" color="text.secondary" mt={0.5}>
-                        {notification.message}
-                      </Typography>
-
-                      {/* Details */}
-                      <Box mt={1.5}>
-                        <Stack direction="row" spacing={1} mb={1} flexWrap="wrap">
-                          <Chip
-                            icon={<User size={12} />}
-                            label={notification.data.customerName}
-                            size="small"
-                            variant="outlined"
-                            sx={{ height: 24, fontSize: "0.75rem" }}
-                          />
-                          <Chip
-                            icon={<AttachMoney sx={{ fontSize: '0.8rem !important' }} />}
-                            label={`$${notification.data.amount.toFixed(2)}`}
-                            size="small"
-                            color={notification.data.status === 'OVERPAID' ? 'warning' : notification.data.status === 'UNDERPAID' ? 'error' : 'primary'}
-                            sx={{ height: 24, fontSize: "0.75rem" }}
-                          />
-                          {(notification.data as any).monthNumber && (
-                            <Chip
-                              icon={<Calendar size={12} />}
-                              label={`${(notification.data as any).monthNumber}-oy`}
-                              size="small"
-                              color="secondary"
-                              sx={{ height: 24, fontSize: "0.75rem" }}
-                            />
-                          )}
-                          {(notification.data as any).paymentType && (
-                            <Chip
-                              icon={
-                                (notification.data as any).paymentType === 'FULL' ? <CheckCircle size={12} /> :
-                                (notification.data as any).paymentType === 'EXCESS' ? <TrendingUp size={12} /> : 
-                                <AlertTriangle size={12} />
-                              }
-                              label={
-                                (notification.data as any).paymentType === 'FULL' ? 'To\'liq' :
-                                (notification.data as any).paymentType === 'EXCESS' ? 'Ortiqcha' : 
-                                'Qisman'
-                              }
-                              size="small"
-                              variant="outlined"
-                              sx={{ height: 24, fontSize: "0.65rem" }}
+                          >
+                            {notification.title}
+                          </Typography>
+                          {!notification.isRead && (
+                            <Box
+                              sx={{
+                                width: 8,
+                                height: 8,
+                                borderRadius: "50%",
+                                bgcolor: accentColor,
+                                flexShrink: 0,
+                                ml: 1,
+                              }}
                             />
                           )}
                         </Stack>
-                        
-                        {/* Product Name */}
-                        <Typography 
-                          variant="caption" 
-                          color="text.secondary"
-                          sx={{ 
-                            display: "flex",
-                            alignItems: "center",
-                            bgcolor: "action.hover",
-                            p: 0.5,
-                            borderRadius: 0.5,
-                            fontSize: "0.7rem"
-                          }}
+                        <Typography
+                          sx={{ fontSize: "0.75rem", color: "#64748B", mt: 0.25, lineHeight: 1.4 }}
                         >
-                          <Package size={12} style={{ marginRight: 4 }} />
-                          {notification.data.productName}
+                          {notification.message}
                         </Typography>
                       </Box>
+                    </Stack>
 
-                      {/* Time */}
-                      <Stack direction="row" alignItems="center" spacing={0.5} mt={1}>
-                        <Clock size={12} color="#999" />
-                        <Typography variant="caption" color="text.secondary">
+                    {/* Info chips */}
+                    <Box sx={{ mt: 1.25, display: "flex", flexWrap: "wrap", gap: 0.6 }}>
+                      <Chip
+                        icon={<User size={11} />}
+                        label={notification.data.customerName}
+                        size="small"
+                        sx={{
+                          height: 22,
+                          fontSize: "0.68rem",
+                          fontWeight: 600,
+                          bgcolor: "#F1F5F9",
+                          color: "#475569",
+                          border: "none",
+                          "& .MuiChip-icon": { color: "#94A3B8", ml: 0.5 },
+                          "& .MuiChip-label": { px: 0.75 },
+                        }}
+                      />
+                      <Chip
+                        icon={<DollarSign size={11} />}
+                        label={`$${notification.data.amount.toFixed(2)}`}
+                        size="small"
+                        sx={{
+                          height: 22,
+                          fontSize: "0.68rem",
+                          fontWeight: 700,
+                          bgcolor: `${accentColor}15`,
+                          color: accentColor,
+                          border: "none",
+                          "& .MuiChip-icon": { color: accentColor, ml: 0.5 },
+                          "& .MuiChip-label": { px: 0.75 },
+                        }}
+                      />
+                      {monthNumber && (
+                        <Chip
+                          icon={<Calendar size={11} />}
+                          label={`${monthNumber}-oy`}
+                          size="small"
+                          sx={{
+                            height: 22,
+                            fontSize: "0.68rem",
+                            fontWeight: 600,
+                            bgcolor: "#EEF2FF",
+                            color: "#4F46E5",
+                            border: "none",
+                            "& .MuiChip-icon": { color: "#4F46E5", ml: 0.5 },
+                            "& .MuiChip-label": { px: 0.75 },
+                          }}
+                        />
+                      )}
+                      {paymentType && (
+                        <Chip
+                          icon={
+                            paymentType === "FULL" ? <CheckCircle size={11} /> :
+                            paymentType === "EXCESS" ? <TrendingUp size={11} /> :
+                            <AlertTriangle size={11} />
+                          }
+                          label={
+                            paymentType === "FULL" ? "To'liq" :
+                            paymentType === "EXCESS" ? "Ortiqcha" :
+                            "Qisman"
+                          }
+                          size="small"
+                          sx={{
+                            height: 22,
+                            fontSize: "0.68rem",
+                            fontWeight: 600,
+                            bgcolor: "#F8FAFC",
+                            color: "#64748B",
+                            border: "1px solid #E2E8F0",
+                            "& .MuiChip-icon": { color: "#94A3B8", ml: 0.5 },
+                            "& .MuiChip-label": { px: 0.75 },
+                          }}
+                        />
+                      )}
+                    </Box>
+
+                    {/* Product + Time row */}
+                    <Stack
+                      direction="row"
+                      alignItems="center"
+                      justifyContent="space-between"
+                      sx={{ mt: 1 }}
+                    >
+                      <Stack direction="row" alignItems="center" spacing={0.5}>
+                        <Package size={12} color="#94A3B8" />
+                        <Typography
+                          sx={{
+                            fontSize: "0.7rem",
+                            color: "#94A3B8",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                            maxWidth: "160px",
+                          }}
+                        >
+                          {notification.data.productName}
+                        </Typography>
+                      </Stack>
+                      <Stack direction="row" alignItems="center" spacing={0.4}>
+                        <Clock size={11} color="#CBD5E1" />
+                        <Typography sx={{ fontSize: "0.65rem", color: "#CBD5E1" }}>
                           {formatDistanceToNow(new Date(notification.createdAt), {
                             addSuffix: true,
                             locale: uz,
                           })}
                         </Typography>
                       </Stack>
-                    </Box>
-                  </Stack>
-                </CardContent>
-              </Card>
-            ))}
+                    </Stack>
+                  </Box>
+                </Box>
+              );
+            })}
           </Stack>
         )}
       </Box>
