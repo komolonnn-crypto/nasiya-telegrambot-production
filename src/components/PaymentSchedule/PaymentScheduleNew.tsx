@@ -76,7 +76,7 @@ const PaymentScheduleNew: FC<PaymentScheduleProps> = ({
   readOnly,
 }) => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [expandedMonth, setExpandedMonth] = useState<number | null>(null);
   const { showError, showWarning } = useAlert();
   const [paymentModal, setPaymentModal] = useState<{
@@ -85,8 +85,9 @@ const PaymentScheduleNew: FC<PaymentScheduleProps> = ({
     isPayAll?: boolean;
     paymentId?: string;
     month?: number;
-    isDebtPayment?: boolean; // ✅ YANGI: Qarz to'lovi flag'i
-    originalAmount?: number; // ✅ YANGI: Asosiy oylik to'lov miqdori
+    isDebtPayment?: boolean;
+    originalAmount?: number;
+    isInitialPayment?: boolean;
   }>({
     open: false,
     amount: 0,
@@ -95,6 +96,7 @@ const PaymentScheduleNew: FC<PaymentScheduleProps> = ({
     month: undefined,
     isDebtPayment: false,
     originalAmount: undefined,
+    isInitialPayment: false,
   });
 
   // ✅ YANGI: Reminder dialog state
@@ -112,45 +114,62 @@ const PaymentScheduleNew: FC<PaymentScheduleProps> = ({
     currentReminderComment: null,
   });
 
+  // Boshlang'ich to'lov holati (har qanday shartnoma uchun)
+  const paidInitialRecord = payments.find(
+    (p) => p.paymentType === "initial" && p.isPaid,
+  );
+  const pendingInitialRecord = payments.find(
+    (p) => p.paymentType === "initial" && p.status === "PENDING",
+  );
+  const hasAnyInitialPayment = !!paidInitialRecord || !!pendingInitialRecord;
 
   // To'lov jadvalini yaratish
   const generateSchedule = (): PaymentScheduleItem[] => {
     const schedule: PaymentScheduleItem[] = [];
     const start = new Date(startDate);
 
-    const initialPaymentRecord = payments.find(
-      (p) => p.paymentType === "initial" && p.isPaid
-    );
-    const isInitialPaid = !!initialPaymentRecord;
+    const isInitialPaid = !!paidInitialRecord;
 
-    if (initialPayment > 0) {
-      const initialDate = initialPaymentDueDate
-        ? new Date(initialPaymentDueDate)
-        : start;
+    // ✅ Initial row HAR DOIM ko'rsatiladi:
+    // - To'langan / Pending bo'lsa → haqiqiy summa
+    // - Admin belgilagan bo'lsa → o'sha summa
+    // - Hech narsa yo'q bo'lsa → 0 (UI'da "Mavjud emas" ko'rsatiladi)
+    const initialDate =
+      initialPaymentDueDate ? new Date(initialPaymentDueDate) : start;
+    const rowAmount =
+      paidInitialRecord?.amount ||
+      pendingInitialRecord?.amount ||
+      initialPayment ||
+      0;
 
-      schedule.push({
-        month: 0,
-        date: format(initialDate, "yyyy-MM-dd"),
-        amount: initialPayment,
-        isPaid: isInitialPaid,
-        isInitial: true,
-      });
-    }
+    schedule.push({
+      month: 0,
+      date: format(initialDate, "yyyy-MM-dd"),
+      amount: rowAmount,
+      isPaid: isInitialPaid,
+      isInitial: true,
+    });
 
     const monthlyPayments = payments
       .filter((p) => p.paymentType !== "initial" && p.isPaid)
       .sort((a, b) => {
-        const dateA = a.confirmedAt ? new Date(a.confirmedAt) : new Date(a.date);
-        const dateB = b.confirmedAt ? new Date(b.confirmedAt) : new Date(b.date);
+        const dateA =
+          a.confirmedAt ? new Date(a.confirmedAt) : new Date(a.date);
+        const dateB =
+          b.confirmedAt ? new Date(b.confirmedAt) : new Date(b.date);
         if (dateA.getTime() === dateB.getTime()) {
-          return new Date(a.date as string).getTime() - new Date(b.date as string).getTime();
+          return (
+            new Date(a.date as string).getTime() -
+            new Date(b.date as string).getTime()
+          );
         }
         return dateA.getTime() - dateB.getTime();
       });
 
     // ✅ TUZATISH: nextPaymentDate dan boshlab oylar qo'shamiz
     // startDate emas, nextPaymentDate - bu birinchi oylik to'lov sanasi
-    const firstMonthlyPaymentDate = nextPaymentDate ? new Date(nextPaymentDate) : addMonths(start, 1);
+    const firstMonthlyPaymentDate =
+      nextPaymentDate ? new Date(nextPaymentDate) : addMonths(start, 1);
 
     for (let i = 1; i <= period; i++) {
       // ✅ TUZATILDI: nextPaymentDate dan (i-1) oy qo'shish
@@ -174,7 +193,14 @@ const PaymentScheduleNew: FC<PaymentScheduleProps> = ({
   const today = new Date();
   const paidCount = schedule.filter((s) => s.isPaid).length;
 
-  const handlePayment = (amount: number, paymentId?: string, month?: number, isDebtPayment = false, originalAmount?: number) => {
+  const handlePayment = (
+    amount: number,
+    paymentId?: string,
+    month?: number,
+    isDebtPayment = false,
+    originalAmount?: number,
+    isInitial = false,
+  ) => {
     if (!contractId && !debtorId) {
       alert("Xatolik: Shartnoma ID topilmadi");
       return;
@@ -183,20 +209,44 @@ const PaymentScheduleNew: FC<PaymentScheduleProps> = ({
       alert("Xatolik: Mijoz ID topilmadi");
       return;
     }
-    
-    // ✅ MUHIM: PENDING tekshiruvi - modal ochishdan oldin
-    if (month) {
-      const hasPending = payments.some(
-        (p) => p.status === "PENDING" && p.targetMonth === month
+
+    if (isInitial) {
+      // Boshlang'ich to'lov uchun PENDING tekshiruvi
+      const hasPendingInitial = payments.some(
+        (p) =>
+          p.status === "PENDING" &&
+          (p.paymentType === "initial" || p.targetMonth === 0),
       );
-      
+      if (hasPendingInitial) {
+        showWarning(
+          "Boshlang'ich to'lov allaqachon kassa tasdiqlashini kutmoqda.",
+          "Kutilmoqda",
+        );
+        return;
+      }
+    } else if (month) {
+      // Oylik to'lov uchun PENDING tekshiruvi
+      const hasPending = payments.some(
+        (p) => p.status === "PENDING" && p.targetMonth === month,
+      );
       if (hasPending) {
-        showWarning("Bu oy uchun to'lov allaqachon kutilmoqda. Kassa tasdiqini kuting.", "Kutilmoqda");
+        showWarning(
+          "Bu oy uchun to'lov allaqachon kutilmoqda. Kassa tasdiqini kuting.",
+          "Kutilmoqda",
+        );
         return;
       }
     }
-    
-    setPaymentModal({ open: true, amount, paymentId, month, isDebtPayment, originalAmount });
+
+    setPaymentModal({
+      open: true,
+      amount,
+      paymentId,
+      month,
+      isDebtPayment,
+      originalAmount,
+      isInitialPayment: isInitial,
+    });
   };
 
   const handlePayAll = () => {
@@ -208,19 +258,18 @@ const PaymentScheduleNew: FC<PaymentScheduleProps> = ({
       alert("Xatolik: Mijoz ID topilmadi");
       return;
     }
-    
+
     // ✅ MUHIM: PENDING to'lovlar borligini tekshirish
     const hasPendingPayments = payments.some((p) => p.status === "PENDING");
     if (hasPendingPayments) {
       alert("To'lovlar kutilmoqda. Kassa tasdiqini kuting.");
       return;
     }
-    
+
     setPaymentModal({ open: true, amount: remainingDebt || 0, isPayAll: true });
   };
 
   const handlePaymentSuccess = () => {
-    
     setPaymentModal({
       open: false,
       amount: 0,
@@ -229,8 +278,9 @@ const PaymentScheduleNew: FC<PaymentScheduleProps> = ({
       month: undefined,
       isDebtPayment: false,
       originalAmount: undefined,
+      isInitialPayment: false,
     });
-    
+
     // ✅ MUHIM: Backend payment yaratishi uchun biroz kutamiz
     // Bu PENDING statusni to'g'ri ko'rsatish uchun zarur
     setTimeout(() => {
@@ -245,12 +295,17 @@ const PaymentScheduleNew: FC<PaymentScheduleProps> = ({
   };
 
   // ✅ YANGI: Reminder dialog ochish
-  const handleOpenReminderDialog = (month: number, paymentDate: string, currentReminder?: string | Date | null, currentComment?: string | null) => {
+  const handleOpenReminderDialog = (
+    month: number,
+    paymentDate: string,
+    currentReminder?: string | Date | null,
+    currentComment?: string | null,
+  ) => {
     if (!contractId) {
       showError("Shartnoma ID topilmadi", "Xatolik");
       return;
     }
-    
+
     setReminderDialog({
       open: true,
       targetMonth: month,
@@ -288,17 +343,18 @@ const PaymentScheduleNew: FC<PaymentScheduleProps> = ({
           borderColor: "divider",
           borderRadius: 1,
           overflow: "hidden",
-        }}
-      >
+        }}>
         {/* Header */}
         <Box
           sx={{
             p: 1.5,
             bgcolor: "primary.main",
             color: "white",
-          }}
-        >
-          <Stack direction="row" justifyContent="space-between" alignItems="center">
+          }}>
+          <Stack
+            direction="row"
+            justifyContent="space-between"
+            alignItems="center">
             <Typography variant="subtitle1" fontWeight={600}>
               To'lov jadvali
             </Typography>
@@ -315,8 +371,7 @@ const PaymentScheduleNew: FC<PaymentScheduleProps> = ({
                 bgcolor: "rgba(76, 175, 80, 0.2)",
                 borderRadius: 0.5,
                 border: "1px solid rgba(76, 175, 80, 0.5)",
-              }}
-            >
+              }}>
               <Stack direction="row" alignItems="center" spacing={0.5}>
                 <MdCheckCircle size={16} />
                 <Typography variant="caption" fontWeight={600}>
@@ -335,31 +390,57 @@ const PaymentScheduleNew: FC<PaymentScheduleProps> = ({
             display: "flex",
             alignItems: "center",
             gap: 1.5,
-          }}
-        >
+          }}>
           {/* Stats Grid */}
-          <Box sx={{ flex: 1, display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 2 }}>
+          <Box
+            sx={{
+              flex: 1,
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr 1fr",
+              gap: 2,
+            }}>
             <Box>
-              <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.7rem", display: "block" }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ fontSize: "0.7rem", display: "block" }}>
                 Umumiy
               </Typography>
-              <Typography variant="body2" fontWeight={700} color="primary.main" sx={{ fontSize: "0.9rem" }}>
+              <Typography
+                variant="body2"
+                fontWeight={700}
+                color="primary.main"
+                sx={{ fontSize: "0.9rem" }}>
                 ${(totalPaid + remainingDebt)?.toLocaleString()}
               </Typography>
             </Box>
             <Box>
-              <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.7rem", display: "block" }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ fontSize: "0.7rem", display: "block" }}>
                 To'langan
               </Typography>
-              <Typography variant="body2" fontWeight={700} color="success.main" sx={{ fontSize: "0.9rem" }}>
+              <Typography
+                variant="body2"
+                fontWeight={700}
+                color="success.main"
+                sx={{ fontSize: "0.9rem" }}>
                 ${totalPaid?.toLocaleString()}
               </Typography>
             </Box>
             <Box>
-              <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.7rem", display: "block" }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ fontSize: "0.7rem", display: "block" }}>
                 Qolgan
               </Typography>
-              <Typography variant="body2" fontWeight={700} color="error.main" sx={{ fontSize: "0.9rem" }}>
+              <Typography
+                variant="body2"
+                fontWeight={700}
+                color="error.main"
+                sx={{ fontSize: "0.9rem" }}>
                 ${remainingDebt?.toLocaleString()}
               </Typography>
             </Box>
@@ -382,8 +463,7 @@ const PaymentScheduleNew: FC<PaymentScheduleProps> = ({
                   bgcolor: "grey.300",
                   color: "grey.500",
                 },
-              }}
-            >
+              }}>
               <MdPayment size={22} />
             </IconButton>
           )}
@@ -394,410 +474,820 @@ const PaymentScheduleNew: FC<PaymentScheduleProps> = ({
           <Table size="small" stickyHeader>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ fontWeight: 700, py: { xs: 0.5, sm: 1 }, fontSize: { xs: "0.6rem", sm: "0.75rem", md: "0.8rem" } }}>
+                <TableCell
+                  sx={{
+                    fontWeight: 700,
+                    py: { xs: 0.5, sm: 1 },
+                    fontSize: { xs: "0.6rem", sm: "0.75rem", md: "0.8rem" },
+                  }}>
                   {isMobile ? "Oy" : "To'lov"}
                 </TableCell>
-                <TableCell sx={{ fontWeight: 700, py: { xs: 0.5, sm: 1 }, fontSize: { xs: "0.6rem", sm: "0.75rem", md: "0.8rem" } }}>
+                <TableCell
+                  sx={{
+                    fontWeight: 700,
+                    py: { xs: 0.5, sm: 1 },
+                    fontSize: { xs: "0.6rem", sm: "0.75rem", md: "0.8rem" },
+                  }}>
                   {isMobile ? "Sana" : "Muddat"}
                 </TableCell>
-                <TableCell sx={{ fontWeight: 700, py: { xs: 0.5, sm: 1 }, fontSize: { xs: "0.6rem", sm: "0.75rem", md: "0.8rem" } }}>
+                <TableCell
+                  sx={{
+                    fontWeight: 700,
+                    py: { xs: 0.5, sm: 1 },
+                    fontSize: { xs: "0.6rem", sm: "0.75rem", md: "0.8rem" },
+                  }}>
                   Summa
                 </TableCell>
                 {!isMobile && (
-                  <TableCell sx={{ fontWeight: 700, py: { xs: 0.5, sm: 1 }, fontSize: { xs: "0.6rem", sm: "0.75rem", md: "0.8rem" } }}>
+                  <TableCell
+                    sx={{
+                      fontWeight: 700,
+                      py: { xs: 0.5, sm: 1 },
+                      fontSize: { xs: "0.6rem", sm: "0.75rem", md: "0.8rem" },
+                    }}>
                     Holat
                   </TableCell>
                 )}
-                <TableCell sx={{ fontWeight: 700, py: { xs: 0.5, sm: 1 }, fontSize: { xs: "0.6rem", sm: "0.75rem", md: "0.8rem" } }} align="right">
+                <TableCell
+                  sx={{
+                    fontWeight: 700,
+                    py: { xs: 0.5, sm: 1 },
+                    fontSize: { xs: "0.6rem", sm: "0.75rem", md: "0.8rem" },
+                  }}
+                  align="right">
                   Amal
                 </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {schedule.map((item) => {
-            const isPast = new Date(item.date) < today;
-            const isExpanded = expandedMonth === item.month;
+                const isPast = new Date(item.date) < today;
+                const isExpanded = expandedMonth === item.month;
 
-            // Payment details
-            const monthlyPayments = payments
-              .filter((p) => p.paymentType !== "initial" && p.isPaid)
-              .sort((a, b) => {
-                const dateA = a.confirmedAt ? new Date(a.confirmedAt) : new Date(a.date);
-                const dateB = b.confirmedAt ? new Date(b.confirmedAt) : new Date(b.date);
-                return dateA.getTime() - dateB.getTime();
-              });
+                // Payment details
+                const monthlyPayments = payments
+                  .filter((p) => p.paymentType !== "initial" && p.isPaid)
+                  .sort((a, b) => {
+                    const dateA =
+                      a.confirmedAt ?
+                        new Date(a.confirmedAt)
+                      : new Date(a.date);
+                    const dateB =
+                      b.confirmedAt ?
+                        new Date(b.confirmedAt)
+                      : new Date(b.date);
+                    return dateA.getTime() - dateB.getTime();
+                  });
 
-            let actualPayment;
-            if (item.isInitial) {
-              actualPayment = payments.find((p) => p.paymentType === "initial" && p.isPaid);
-            } else {
-              actualPayment = monthlyPayments[item.month - 1];
-            }
+                let actualPayment;
+                if (item.isInitial) {
+                  actualPayment = payments.find(
+                    (p) => p.paymentType === "initial" && p.isPaid,
+                  );
+                } else {
+                  actualPayment = monthlyPayments[item.month - 1];
+                }
 
-            // ✅ PENDING payment check - o'sha oyga to'lov kutilmoqda
-            const hasPendingPayment = payments.some(
-              (p) => p.status === "PENDING" && p.targetMonth === item.month
-            );
+                // ✅ PENDING payment check
+                const hasPendingPayment =
+                  item.isInitial ?
+                    payments.some(
+                      (p) =>
+                        p.status === "PENDING" &&
+                        (p.paymentType === "initial" || p.targetMonth === 0),
+                    )
+                  : payments.some(
+                      (p) =>
+                        p.status === "PENDING" && p.targetMonth === item.month,
+                    );
 
-            // ✅ REJECTED payment check - rad etilgan to'lov (yana to'lash mumkin)
-            // Check if payment was rejected
-            const hasRejectedPayment = payments.some(
-              (p) => p.status === "REJECTED" && p.targetMonth === item.month
-            );
-            // Can be used later for UI indicators
-            void hasRejectedPayment;
+                // ✅ REJECTED payment check - rad etilgan to'lov (yana to'lash mumkin)
+                // Check if payment was rejected
+                const hasRejectedPayment = payments.some(
+                  (p) =>
+                    p.status === "REJECTED" && p.targetMonth === item.month,
+                );
+                // Can be used later for UI indicators
+                void hasRejectedPayment;
 
-            // ✅ YANGI: Reminder check
-            const paymentWithReminder = payments.find(
-              (p) => p.targetMonth === item.month && p.reminderDate
-            );
-            const hasReminder = !!paymentWithReminder?.reminderDate;
+                // ✅ YANGI: Reminder check
+                const paymentWithReminder = payments.find(
+                  (p) => p.targetMonth === item.month && p.reminderDate,
+                );
+                const hasReminder = !!paymentWithReminder?.reminderDate;
 
-            const hasShortage =
-              actualPayment?.remainingAmount != null && actualPayment.remainingAmount > 0.01;
-            // const hasExcess = false;
-              // actualPayment?.excessAmount != null && actualPayment.excessAmount > 0.01;
+                const hasShortage =
+                  actualPayment?.remainingAmount != null &&
+                  actualPayment.remainingAmount > 0.01;
+                // const hasExcess = false;
+                // actualPayment?.excessAmount != null && actualPayment.excessAmount > 0.01;
 
-            // ✅ TUZATISH: To'langan summani to'g'ri aniqlash
-            // 1. KAM to'lov (remainingAmount > 0): actualAmount ishlatish (60$)
-            // 2. TO'LIQ yoki ORTIQCHA to'lov: amount ishlatish (140$ yoki 148$)
-            let actualPaidAmount = 0;
-            if (item.isPaid && actualPayment) {
-              if (hasShortage && actualPayment.remainingAmount && actualPayment.remainingAmount > 0.01) {
-                // ✅ KAM to'lov: haqiqatda to'langan summa
-                actualPaidAmount = actualPayment.actualAmount || actualPayment.amount || 0;
-              } else {
-                // ✅ TO'LIQ/ORTIQCHA to'lov: kutilgan summa (amount)
-                actualPaidAmount = actualPayment.amount || actualPayment.expectedAmount || 0;
-              }
-            }
+                // ✅ TUZATISH: To'langan summani to'g'ri aniqlash
+                // 1. KAM to'lov (remainingAmount > 0): actualAmount ishlatish (60$)
+                // 2. TO'LIQ yoki ORTIQCHA to'lov: amount ishlatish (140$ yoki 148$)
+                let actualPaidAmount = 0;
+                if (item.isPaid && actualPayment) {
+                  if (
+                    hasShortage &&
+                    actualPayment.remainingAmount &&
+                    actualPayment.remainingAmount > 0.01
+                  ) {
+                    // ✅ KAM to'lov: haqiqatda to'langan summa
+                    actualPaidAmount =
+                      actualPayment.actualAmount || actualPayment.amount || 0;
+                  } else {
+                    // ✅ TO'LIQ/ORTIQCHA to'lov: kutilgan summa (amount)
+                    actualPaidAmount =
+                      actualPayment.amount || actualPayment.expectedAmount || 0;
+                  }
+                }
 
-            let delayDays = 0;
-            if (actualPayment && item.isPaid) {
-              const scheduledDate = new Date(item.date);
-              const paidDate = new Date(actualPayment.date as string);
-              delayDays = Math.floor(
-                (paidDate.getTime() - scheduledDate.getTime()) / (1000 * 60 * 60 * 24)
-              );
-            }
+                let delayDays = 0;
+                if (actualPayment && item.isPaid) {
+                  const scheduledDate = new Date(item.date);
+                  const paidDate = new Date(actualPayment.date as string);
+                  delayDays = Math.floor(
+                    (paidDate.getTime() - scheduledDate.getTime()) /
+                      (1000 * 60 * 60 * 24),
+                  );
+                }
 
-            return (
-              <>
-                {/* Main Table Row */}
-                <TableRow 
-                  key={`payment-${item.month}`}
-                  hover
-                  sx={{ 
-                    cursor: "pointer",
-                    bgcolor: item.isPaid ? "success.lighter" : 
-                            isPast && !item.isPaid ? "error.lighter" : "inherit",
-                    "&:hover": {
-                      bgcolor: item.isPaid ? "success.light" : 
-                              isPast && !item.isPaid ? "error.light" : "grey.50"
-                    }
-                  }}
-                  onClick={() => toggleExpand(item.month)}
-                >
-                  {/* Month/Type Column */}
-                  <TableCell sx={{ py: { xs: 0.75, sm: 1.5 } }}>
-                    <Stack direction="row" alignItems="center" spacing={isMobile ? 0.5 : 1}>
-                      {isPast && !item.isPaid && !isMobile && <AlertCircle size={16} color="#d32f2f" />}
-                      {item.isPaid && !isMobile && <MdCheckCircle size={18} color="#2e7d32" />}
-                      <Typography
-                        variant="body2"
-                        fontWeight={600}
-                        color={isPast && !item.isPaid ? "error.main" : "text.primary"}
-                        sx={{ fontSize: { xs: "0.65rem", sm: "0.8rem", md: "0.875rem" } }}
-                      >
-                        {item.isInitial 
-                          ? (isMobile ? "0" : "Boshlang'ich") 
-                          : isMobile 
-                            ? `${item.month}` 
-                            : `${item.month}-oy`
-                        }
-                      </Typography>
-                    </Stack>
-                  </TableCell>
-                  
-                  {/* Date Column */}
-                  <TableCell sx={{ py: { xs: 0.75, sm: 1.5 } }}>
-                    <Typography 
-                      variant="body2" 
-                      color="text.secondary"
-                      sx={{ fontSize: { xs: "0.6rem", sm: "0.75rem", md: "0.8rem" } }}
-                    >
-                      {(() => {
-                        try {
-                          if (!item.date) return '-';
-                          const date = new Date(item.date);
-                          return isNaN(date.getTime()) ? '-' : format(date, isMobile ? "dd.MM" : "dd.MM.yyyy");
-                        } catch {
-                          return '-';
-                        }
-                      })()}
-                    </Typography>
-                  </TableCell>
-                  
-                  {/* Amount Column */}
-                  <TableCell sx={{ py: { xs: 0.75, sm: 1.5 } }}>
-                    <Typography 
-                      variant="body2" 
-                      fontWeight={600}
-                      sx={{ fontSize: { xs: "0.65rem", sm: "0.8rem", md: "0.875rem" } }}
-                    >
-                      ${item.amount.toLocaleString()}
-                    </Typography>
-                  </TableCell>
-                  
-                  {/* Status Column (Desktop only) */}
-                  {!isMobile && (
-                    <TableCell sx={{ py: { xs: 0.75, sm: 1.5 } }}>
-                      {actualPayment?.status ? (
-                        <StatusBadge status={actualPayment.status} size="small" />
-                      ) : (
-                        <Chip
-                          label={isPast && !item.isPaid ? "Kechikkan" : !item.isPaid ? "Kutilmoqda" : "To'langan"}
-                          size="small"
-                          color={isPast && !item.isPaid ? "error" : !item.isPaid ? "default" : "success"}
-                          variant={!item.isPaid ? "outlined" : "filled"}
-                          sx={{ 
-                            fontSize: "0.65rem", 
-                            height: 20,
-                            minWidth: 60
-                          }}
-                        />
+                return (
+                  <>
+                    {/* Main Table Row */}
+                    <TableRow
+                      key={`payment-${item.month}`}
+                      hover
+                      sx={{
+                        cursor: "pointer",
+                        bgcolor:
+                          item.isPaid ? "success.lighter"
+                          : isPast && !item.isPaid ? "error.lighter"
+                          : "inherit",
+                        "&:hover": {
+                          bgcolor:
+                            item.isPaid ? "success.light"
+                            : isPast && !item.isPaid ? "error.light"
+                            : "grey.50",
+                        },
+                      }}
+                      onClick={() => toggleExpand(item.month)}>
+                      {/* Month/Type Column */}
+                      <TableCell sx={{ py: { xs: 0.75, sm: 1.5 } }}>
+                        <Stack
+                          direction="row"
+                          alignItems="center"
+                          spacing={isMobile ? 0.5 : 1}>
+                          {isPast && !item.isPaid && !isMobile && (
+                            <AlertCircle size={16} color="#d32f2f" />
+                          )}
+                          {item.isPaid && !isMobile && (
+                            <MdCheckCircle size={18} color="#2e7d32" />
+                          )}
+                          <Typography
+                            variant="body2"
+                            fontWeight={600}
+                            color={
+                              isPast && !item.isPaid ?
+                                "error.main"
+                              : "text.primary"
+                            }
+                            sx={{
+                              fontSize: {
+                                xs: "0.65rem",
+                                sm: "0.8rem",
+                                md: "0.875rem",
+                              },
+                            }}>
+                            {item.isInitial ?
+                              isMobile ?
+                                "0"
+                              : "Boshlang'ich"
+                            : isMobile ?
+                              `${item.month}`
+                            : `${item.month}-oy`}
+                          </Typography>
+                        </Stack>
+                      </TableCell>
+
+                      {/* Date Column */}
+                      <TableCell sx={{ py: { xs: 0.75, sm: 1.5 } }}>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{
+                            fontSize: {
+                              xs: "0.6rem",
+                              sm: "0.75rem",
+                              md: "0.8rem",
+                            },
+                          }}>
+                          {(() => {
+                            try {
+                              if (!item.date) return "-";
+                              const date = new Date(item.date);
+                              return isNaN(date.getTime()) ? "-" : (
+                                  format(
+                                    date,
+                                    isMobile ? "dd.MM" : "dd.MM.yyyy",
+                                  )
+                                );
+                            } catch {
+                              return "-";
+                            }
+                          })()}
+                        </Typography>
+                      </TableCell>
+
+                      {/* Amount Column */}
+                      <TableCell sx={{ py: { xs: 0.75, sm: 1.5 } }}>
+                        <Typography
+                          variant="body2"
+                          fontWeight={600}
+                          color={
+                            (
+                              item.isInitial &&
+                              !hasAnyInitialPayment &&
+                              initialPayment === 0
+                            ) ?
+                              "text.disabled"
+                            : "inherit"
+                          }
+                          sx={{
+                            fontSize: {
+                              xs: "0.65rem",
+                              sm: "0.8rem",
+                              md: "0.875rem",
+                            },
+                          }}>
+                          {(
+                            item.isInitial &&
+                            !hasAnyInitialPayment &&
+                            initialPayment === 0
+                          ) ?
+                            "—"
+                          : `$${item.amount.toLocaleString()}`}
+                        </Typography>
+                      </TableCell>
+
+                      {/* Status Column (Desktop only) */}
+                      {!isMobile && (
+                        <TableCell sx={{ py: { xs: 0.75, sm: 1.5 } }}>
+                          {item.isInitial ?
+                            // ✅ Initial to'lov uchun aniq statuslar
+                            item.isPaid ?
+                              <StatusBadge
+                                status={paidInitialRecord?.status || "PAID"}
+                                size="small"
+                              />
+                            : hasPendingPayment ?
+                              <Chip
+                                icon={<Clock size={11} />}
+                                label="Kassada kutilmoqda"
+                                size="small"
+                                color="warning"
+                                sx={{ fontSize: "0.6rem", height: 20 }}
+                              />
+                            : !hasAnyInitialPayment && initialPayment === 0 ?
+                              <Chip
+                                label="Mavjud emas"
+                                size="small"
+                                variant="outlined"
+                                sx={{
+                                  fontSize: "0.6rem",
+                                  height: 20,
+                                  color: "text.secondary",
+                                  borderColor: "divider",
+                                }}
+                              />
+                            : <Chip
+                                label="To'lanmagan"
+                                size="small"
+                                color="error"
+                                variant="outlined"
+                                sx={{ fontSize: "0.6rem", height: 20 }}
+                              />
+
+                          : actualPayment?.status ?
+                            <StatusBadge
+                              status={actualPayment.status}
+                              size="small"
+                            />
+                          : <Chip
+                              label={
+                                isPast && !item.isPaid ? "Kechikkan"
+                                : !item.isPaid ?
+                                  "Kutilmoqda"
+                                : "To'langan"
+                              }
+                              size="small"
+                              color={
+                                isPast && !item.isPaid ? "error"
+                                : !item.isPaid ?
+                                  "default"
+                                : "success"
+                              }
+                              variant={!item.isPaid ? "outlined" : "filled"}
+                              sx={{
+                                fontSize: "0.65rem",
+                                height: 20,
+                                minWidth: 60,
+                              }}
+                            />
+                          }
+                        </TableCell>
                       )}
-                    </TableCell>
-                  )}
-                  
-                  {/* Action Column */}
-                  <TableCell sx={{ py: { xs: 0.75, sm: 1.5 } }} align="right">
-                    <Stack direction="row" spacing={isMobile ? 2 : 5} justifyContent="flex-end" alignItems="center">
-                      {!readOnly && (contractId || debtorId) && !item.isPaid && (
-                        <>
-                          <Button
+
+                      {/* Action Column */}
+                      <TableCell
+                        sx={{ py: { xs: 0.75, sm: 1.5 } }}
+                        align="right">
+                        <Stack
+                          direction="row"
+                          spacing={isMobile ? 2 : 5}
+                          justifyContent="flex-end"
+                          alignItems="center">
+                          {!readOnly &&
+                            (contractId || debtorId) &&
+                            !item.isPaid && (
+                              <>
+                                <Button
+                                  size="small"
+                                  variant="contained"
+                                  color={
+                                    item.isInitial ? "primary"
+                                    : isPast ?
+                                      "error"
+                                    : "primary"
+                                  }
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handlePayment(
+                                      item.amount,
+                                      undefined,
+                                      item.month,
+                                      false,
+                                      undefined,
+                                      item.isInitial,
+                                    );
+                                  }}
+                                  disabled={hasPendingPayment}
+                                  sx={{
+                                    minWidth: isMobile ? 35 : 60,
+                                    fontSize: {
+                                      xs: "0.5rem",
+                                      sm: "0.65rem",
+                                      md: "0.7rem",
+                                    },
+                                    py: { xs: 0.2, sm: 0.25 },
+                                    px: isMobile ? 0.4 : 1,
+                                    height: isMobile ? 24 : "auto",
+                                  }}>
+                                  {hasPendingPayment ?
+                                    "Kutish"
+                                  : (
+                                    item.isInitial &&
+                                    !hasAnyInitialPayment &&
+                                    initialPayment === 0
+                                  ) ?
+                                    "Qo'shish"
+                                  : "To'la"}
+                                </Button>
+
+                                {/* ✅ TUZATILDI: Reminder button - har doim ko'rinadi (to'lanmagan oylar uchun) */}
+                                {!item.isInitial && contractId && (
+                                  <IconButton
+                                    size="small"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+
+                                      // ✅ DB'dagi payment'ni topish (agar mavjud bo'lsa)
+                                      const foundPayment = payments.find(
+                                        (p) =>
+                                          p.paymentType !== "initial" &&
+                                          p.targetMonth === item.month,
+                                      );
+
+                                      // ✅ item.month va item.date ishlatiladi (foundPayment bo'lmasa ham ishlaydi)
+                                      const targetMonth = item.month;
+                                      const paymentDate = item.date;
+                                      const currentReminder =
+                                        foundPayment?.reminderDate ||
+                                        paymentWithReminder?.reminderDate;
+                                      const currentComment =
+                                        foundPayment?.reminderComment ||
+                                        paymentWithReminder?.reminderComment;
+
+                                      console.log(
+                                        "📍 Opening reminder dialog:",
+                                        {
+                                          itemMonth: item.month,
+                                          targetMonth,
+                                          foundPayment: !!foundPayment,
+                                          hasExistingReminder:
+                                            !!currentReminder,
+                                          hasExistingComment: !!currentComment,
+                                        },
+                                      );
+
+                                      handleOpenReminderDialog(
+                                        targetMonth,
+                                        paymentDate,
+                                        currentReminder,
+                                        currentComment,
+                                      );
+                                    }}
+                                    sx={{
+                                      color:
+                                        hasReminder ? "warning.main" : (
+                                          "action.disabled"
+                                        ),
+                                      p: isMobile ? 0.3 : 0.5,
+                                      "&:hover": {
+                                        color: "warning.main",
+                                        bgcolor: "warning.lighter",
+                                      },
+                                    }}>
+                                    <Bell size={isMobile ? 14 : 16} />
+                                  </IconButton>
+                                )}
+                              </>
+                            )}
+
+                          {/* Qarz tugmasi - kam to'lov uchun */}
+                          {!readOnly &&
+                            (contractId || debtorId) &&
+                            item.isPaid &&
+                            hasShortage &&
+                            actualPayment?.remainingAmount &&
+                            actualPayment.remainingAmount > 0.01 && (
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                color="error"
+                                disabled={hasPendingPayment}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (!actualPayment?._id) {
+                                    showError("To'lov ID topilmadi", "Xatolik");
+                                    return;
+                                  }
+                                  handlePayment(
+                                    actualPayment.remainingAmount!,
+                                    actualPayment._id,
+                                    item.month,
+                                    true,
+                                    item.amount,
+                                  );
+                                }}
+                                sx={{
+                                  minWidth: isMobile ? 45 : 55,
+                                  fontSize: {
+                                    xs: "0.55rem",
+                                    sm: "0.6rem",
+                                    md: "0.7rem",
+                                  },
+                                  py: 0.25,
+                                }}>
+                                Qarz
+                              </Button>
+                            )}
+
+                          {/* Pending chip — initial uchun "Kassada", oylik uchun "Kutish" */}
+                          {hasPendingPayment && !isMobile && (
+                            <Chip
+                              icon={<Clock size={12} />}
+                              label={item.isInitial ? "Kassada" : "Kutish"}
+                              size="small"
+                              color="warning"
+                              variant="outlined"
+                              sx={{
+                                fontSize: "0.65rem",
+                                height: 20,
+                              }}
+                            />
+                          )}
+
+                          {item.isPaid && !hasShortage && (
+                            <Chip
+                              icon={<MdCheckCircle size={12} />}
+                              label="OK"
+                              size="small"
+                              color="success"
+                              sx={{ fontSize: "0.65rem", height: 20 }}
+                            />
+                          )}
+
+                          <IconButton
                             size="small"
-                            variant="contained"
-                            color={isPast ? "error" : "primary"}
                             onClick={(e) => {
                               e.stopPropagation();
-                              handlePayment(item.amount, undefined, item.month);
-                            }}
-                            disabled={hasPendingPayment}
-                            sx={{
-                              minWidth: isMobile ? 35 : 60,
-                              fontSize: { xs: "0.5rem", sm: "0.65rem", md: "0.7rem" },
-                              py: { xs: 0.2, sm: 0.25 },
-                              px: isMobile ? 0.4 : 1,
-                              height: isMobile ? 24 : "auto",
-                            }}
-                          >
-                            {hasPendingPayment ? "Kutish" : "To'la"}
-                          </Button>
-                          
-                          {/* ✅ TUZATILDI: Reminder button - har doim ko'rinadi (to'lanmagan oylar uchun) */}
-                          {!item.isInitial && contractId && (
-                            <IconButton
-                              size="small"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                
-                                // ✅ DB'dagi payment'ni topish (agar mavjud bo'lsa)
-                                const foundPayment = payments.find(
-                                  (p) => p.paymentType !== "initial" && p.targetMonth === item.month
-                                );
-                                
-                                // ✅ item.month va item.date ishlatiladi (foundPayment bo'lmasa ham ishlaydi)
-                                const targetMonth = item.month;
-                                const paymentDate = item.date;
-                                const currentReminder = foundPayment?.reminderDate || paymentWithReminder?.reminderDate;
-                                const currentComment = foundPayment?.reminderComment || paymentWithReminder?.reminderComment;
-
-                                console.log("📍 Opening reminder dialog:", {
-                                  itemMonth: item.month,
-                                  targetMonth,
-                                  foundPayment: !!foundPayment,
-                                  hasExistingReminder: !!currentReminder,
-                                  hasExistingComment: !!currentComment
-                                });
-
-                                handleOpenReminderDialog(
-                                  targetMonth,
-                                  paymentDate,
-                                  currentReminder,
-                                  currentComment
-                                );
-                              }}
-                              sx={{
-                                color: hasReminder ? "warning.main" : "action.disabled",
-                                p: isMobile ? 0.3 : 0.5,
-                                "&:hover": {
-                                  color: "warning.main",
-                                  bgcolor: "warning.lighter",
-                                },
-                              }}
-                            >
-                              <Bell size={isMobile ? 14 : 16} />
-                            </IconButton>
-                          )}
-                        </>
-                      )}
-                      
-                      {/* Qarz tugmasi - kam to'lov uchun */}
-                      {!readOnly && (contractId || debtorId) && item.isPaid && hasShortage && actualPayment?.remainingAmount && actualPayment.remainingAmount > 0.01 && (
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          color="error"
-                          disabled={hasPendingPayment}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (!actualPayment?._id) {
-                              showError("To'lov ID topilmadi", "Xatolik");
-                              return;
-                            }
-                            handlePayment(actualPayment.remainingAmount!, actualPayment._id, item.month, true, item.amount);
-                          }}
-                          sx={{
-                            minWidth: isMobile ? 45 : 55,
-                            fontSize: { xs: "0.55rem", sm: "0.6rem", md: "0.7rem" },
-                            py: 0.25,
-                          }}
-                        >
-                          Qarz
-                        </Button>
-                      )}
-                      
-                      {/* Pending/Success chip uchun */}
-                      {hasPendingPayment && !isMobile && (
-                        <Chip
-                          icon={<Clock size={12} />}
-                          label="Kutish"
-                          size="small"
-                          color="warning"
-                          variant="outlined"
-                          sx={{ 
-                            fontSize: "0.65rem", 
-                            height: 20,
-                          }}
-                        />
-                      )}
-                      
-                      {item.isPaid && !hasShortage && (
-                        <Chip
-                          icon={<MdCheckCircle size={12} />}
-                          label="OK"
-                          size="small"
-                          color="success"
-                          sx={{ fontSize: "0.65rem", height: 20 }}
-                        />
-                      )}
-                      
-                      <IconButton size="small" onClick={(e) => { e.stopPropagation(); toggleExpand(item.month); }}>
-                        {isExpanded ? <MdExpandLess size={18} /> : <MdExpandMore size={18} />}
-                      </IconButton>
-                    </Stack>
-                  </TableCell>
-                </TableRow>
-                
-                {/* Expanded Details Row */}
-                <TableRow>
-                  <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={isMobile ? 4 : 5}>
-                    <Collapse in={isExpanded}>
-                      <Box sx={{ py: 1.5, px: 2, bgcolor: "grey.50" }}>
-                        <Stack spacing={1}>
-                          {/* Badges row - kam to'lov, kechikish */}
-                          {(hasShortage || delayDays > 0) && (
-                            <Stack direction="row" spacing={1} flexWrap="wrap">
-                              {hasShortage && actualPayment?.remainingAmount && (
-                                <Chip
-                                  icon={<MdArrowDownward size={12} />}
-                                  label={`Kam to'lov: $${actualPayment.remainingAmount.toLocaleString()}`}
-                                  size="small"
-                                  color="error"
-                                  sx={{ fontSize: "0.7rem", height: 22 }}
-                                />
-                              )}
-                              {delayDays > 0 && (
-                                <Chip
-                                  icon={<Clock size={12} />}
-                                  label={`${delayDays} kun kechikkan`}
-                                  size="small"
-                                  color="warning"
-                                  sx={{ fontSize: "0.7rem", height: 22 }}
-                                />
-                              )}
-                            </Stack>
-                          )}
-                          
-                          {/* Payment details */}
-                          {item.isPaid && actualPayment && (
-                            <Stack direction={isMobile ? "column" : "row"} spacing={2}>
-                              <Typography variant="body2" fontSize="0.8rem">
-                                <strong>To'langan:</strong> ${actualPaidAmount.toLocaleString()}
-                              </Typography>
-                              <Typography variant="body2" fontSize="0.8rem">
-                                <strong>Sana:</strong> {(() => {
-                                  try {
-                                    if (actualPayment.confirmedAt) {
-                                      const date = new Date(actualPayment.confirmedAt as string);
-                                      return isNaN(date.getTime()) ? '-' : format(date, "dd.MM.yyyy HH:mm");
-                                    } else if (actualPayment.date) {
-                                      const date = new Date(actualPayment.date as string);
-                                      return isNaN(date.getTime()) ? '-' : format(date, "dd.MM.yyyy");
-                                    }
-                                    return '-';
-                                  } catch {
-                                    return '-';
-                                  }
-                                })()}
-                              </Typography>
-                            </Stack>
-                          )}
-                          
-                          {/* Notes */}
-                          {actualPayment?.notes && (
-                            <Typography variant="body2" fontSize="0.8rem" color="text.secondary">
-                              <strong>Izoh:</strong> {typeof actualPayment.notes === 'string' 
-                                ? actualPayment.notes 
-                                : (actualPayment.notes as any)?.text || '-'}
-                            </Typography>
-                          )}
-                          
-                          {/* ✅ YANGI: Reminder info */}
-                          {hasReminder && paymentWithReminder?.reminderDate && (
-                            <Box sx={{ mt: 1, p: 1.5, bgcolor: "warning.lighter", borderRadius: 1, border: "1px solid", borderColor: "warning.main" }}>
-                              <Stack spacing={0.5}>
-                                <Stack direction="row" alignItems="center" spacing={0.5}>
-                                  <Bell size={14} color="#ed6c02" />
-                                  <Typography variant="caption" fontWeight={600} color="warning.dark">
-                                    To'lov {(() => {
-                                      try {
-                                        const date = new Date(paymentWithReminder.reminderDate);
-                                        return isNaN(date.getTime()) ? 'Noto\'g\'ri sana' : format(date, "dd.MM.yyyy");
-                                      } catch {
-                                        return 'Noto\'g\'ri sana';
-                                      }
-                                    })()} kuniga ko'chirildi
-                                  </Typography>
-                                </Stack>
-                                {paymentWithReminder?.reminderComment && (
-                                  <Typography variant="caption" color="text.secondary" sx={{ pl: 2.5 }}>
-                                    💬 {paymentWithReminder.reminderComment}
-                                  </Typography>
-                                )}
-                              </Stack>
-                            </Box>
-                          )}
-                          
+                              toggleExpand(item.month);
+                            }}>
+                            {isExpanded ?
+                              <MdExpandLess size={18} />
+                            : <MdExpandMore size={18} />}
+                          </IconButton>
                         </Stack>
-                      </Box>
-                    </Collapse>
-                  </TableCell>
-                </TableRow>
-              </>
-            );
-          })}
+                      </TableCell>
+                    </TableRow>
+
+                    {/* Expanded Details Row */}
+                    <TableRow>
+                      <TableCell
+                        style={{ paddingBottom: 0, paddingTop: 0 }}
+                        colSpan={isMobile ? 4 : 5}>
+                        <Collapse in={isExpanded}>
+                          <Box sx={{ py: 1.5, px: 2, bgcolor: "grey.50" }}>
+                            <Stack spacing={1}>
+                              {/* Badges row - kam to'lov, kechikish */}
+                              {(hasShortage || delayDays > 0) && (
+                                <Stack
+                                  direction="row"
+                                  spacing={1}
+                                  flexWrap="wrap">
+                                  {hasShortage &&
+                                    actualPayment?.remainingAmount && (
+                                      <Chip
+                                        icon={<MdArrowDownward size={12} />}
+                                        label={`Kam to'lov: $${actualPayment.remainingAmount.toLocaleString()}`}
+                                        size="small"
+                                        color="error"
+                                        sx={{ fontSize: "0.7rem", height: 22 }}
+                                      />
+                                    )}
+                                  {delayDays > 0 && (
+                                    <Chip
+                                      icon={<Clock size={12} />}
+                                      label={`${delayDays} kun kechikkan`}
+                                      size="small"
+                                      color="warning"
+                                      sx={{ fontSize: "0.7rem", height: 22 }}
+                                    />
+                                  )}
+                                </Stack>
+                              )}
+
+                              {/* ✅ INITIAL to'lov — alohida expanded ko'rinish */}
+                              {
+                                item.isInitial ?
+                                  <>
+                                    {/* PAID initial — tasdiqlanish ma'lumotlari */}
+                                    {item.isPaid && paidInitialRecord && (
+                                      <Stack spacing={0.5}>
+                                        <Stack
+                                          direction={
+                                            isMobile ? "column" : "row"
+                                          }
+                                          spacing={2}>
+                                          <Typography
+                                            variant="body2"
+                                            fontSize="0.8rem">
+                                            <strong>To'langan:</strong> $
+                                            {(
+                                              paidInitialRecord.actualAmount ||
+                                              paidInitialRecord.amount
+                                            ).toLocaleString()}
+                                          </Typography>
+                                          {paidInitialRecord.confirmedAt && (
+                                            <Typography
+                                              variant="body2"
+                                              fontSize="0.8rem">
+                                              <strong>Tasdiqlangan:</strong>{" "}
+                                              {(() => {
+                                                try {
+                                                  const date = new Date(
+                                                    paidInitialRecord.confirmedAt as string,
+                                                  );
+                                                  return isNaN(date.getTime()) ?
+                                                      "-"
+                                                    : format(
+                                                        date,
+                                                        "dd.MM.yyyy HH:mm",
+                                                      );
+                                                } catch {
+                                                  return "-";
+                                                }
+                                              })()}
+                                            </Typography>
+                                          )}
+                                        </Stack>
+                                        {paidInitialRecord.notes && (
+                                          <Box
+                                            sx={{
+                                              p: 1,
+                                              bgcolor: "success.lighter",
+                                              borderRadius: 1,
+                                              border: "1px solid",
+                                              borderColor: "success.light",
+                                            }}>
+                                            <Typography
+                                              variant="caption"
+                                              color="success.dark"
+                                              fontWeight={500}>
+                                              {(
+                                                typeof paidInitialRecord.notes ===
+                                                "string"
+                                              ) ?
+                                                paidInitialRecord.notes
+                                              : (paidInitialRecord.notes as any)
+                                                  ?.text || ""
+                                              }
+                                            </Typography>
+                                          </Box>
+                                        )}
+                                      </Stack>
+                                    )}
+
+                                    {/* PENDING initial — kassa kutilmoqda */}
+                                    {!item.isPaid && pendingInitialRecord && (
+                                      <Box
+                                        sx={{
+                                          p: 1,
+                                          bgcolor: "warning.lighter",
+                                          borderRadius: 1,
+                                          border: "1px solid",
+                                          borderColor: "warning.light",
+                                        }}>
+                                        <Stack spacing={0.5}>
+                                          <Typography
+                                            variant="caption"
+                                            fontWeight={600}
+                                            color="warning.dark">
+                                            Kassa tasdiqlashini kutilmoqda
+                                          </Typography>
+                                          <Typography
+                                            variant="caption"
+                                            color="text.secondary">
+                                            Yuborilgan summa: $
+                                            {(
+                                              pendingInitialRecord.actualAmount ||
+                                              pendingInitialRecord.amount
+                                            ).toLocaleString()}
+                                          </Typography>
+                                          <Typography
+                                            variant="caption"
+                                            color="text.secondary">
+                                            Yuborilgan sana:{" "}
+                                            {(() => {
+                                              try {
+                                                const date = new Date(
+                                                  pendingInitialRecord.date as string,
+                                                );
+                                                return isNaN(date.getTime()) ?
+                                                    "-"
+                                                  : format(
+                                                      date,
+                                                      "dd.MM.yyyy HH:mm",
+                                                    );
+                                              } catch {
+                                                return "-";
+                                              }
+                                            })()}
+                                          </Typography>
+                                        </Stack>
+                                      </Box>
+                                    )}
+
+                                    {/* "Mavjud emas" holat */}
+                                    {!hasAnyInitialPayment &&
+                                      initialPayment === 0 && (
+                                        <Typography
+                                          variant="body2"
+                                          fontSize="0.8rem"
+                                          color="text.disabled"
+                                          fontStyle="italic">
+                                          Boshlang'ich to'lov mavjud emas.
+                                          Qo'shmoqchi bo'lsangiz "Qo'shish"
+                                          tugmasini bosing.
+                                        </Typography>
+                                      )}
+                                  </>
+                                  // ✅ OYLIK to'lov — mavjud ko'rinish
+                                : <>
+                                    {/* Payment details */}
+                                    {item.isPaid && actualPayment && (
+                                      <Stack
+                                        direction={isMobile ? "column" : "row"}
+                                        spacing={2}>
+                                        <Typography
+                                          variant="body2"
+                                          fontSize="0.8rem">
+                                          <strong>To'langan:</strong> $
+                                          {actualPaidAmount.toLocaleString()}
+                                        </Typography>
+                                        <Typography
+                                          variant="body2"
+                                          fontSize="0.8rem">
+                                          <strong>Sana:</strong>{" "}
+                                          {(() => {
+                                            try {
+                                              if (actualPayment.confirmedAt) {
+                                                const date = new Date(
+                                                  actualPayment.confirmedAt as string,
+                                                );
+                                                return isNaN(date.getTime()) ?
+                                                    "-"
+                                                  : format(
+                                                      date,
+                                                      "dd.MM.yyyy HH:mm",
+                                                    );
+                                              } else if (actualPayment.date) {
+                                                const date = new Date(
+                                                  actualPayment.date as string,
+                                                );
+                                                return isNaN(date.getTime()) ?
+                                                    "-"
+                                                  : format(date, "dd.MM.yyyy");
+                                              }
+                                              return "-";
+                                            } catch {
+                                              return "-";
+                                            }
+                                          })()}
+                                        </Typography>
+                                      </Stack>
+                                    )}
+
+                                    {/* Notes */}
+                                    {actualPayment?.notes && (
+                                      <Typography
+                                        variant="body2"
+                                        fontSize="0.8rem"
+                                        color="text.secondary">
+                                        <strong>Izoh:</strong>{" "}
+                                        {(
+                                          typeof actualPayment.notes ===
+                                          "string"
+                                        ) ?
+                                          actualPayment.notes
+                                        : (actualPayment.notes as any)?.text ||
+                                          "-"
+                                        }
+                                      </Typography>
+                                    )}
+                                  </>
+
+                              }
+
+                              {/* ✅ YANGI: Reminder info */}
+                              {hasReminder &&
+                                paymentWithReminder?.reminderDate && (
+                                  <Box
+                                    sx={{
+                                      mt: 1,
+                                      p: 1.5,
+                                      bgcolor: "warning.lighter",
+                                      borderRadius: 1,
+                                      border: "1px solid",
+                                      borderColor: "warning.main",
+                                    }}>
+                                    <Stack spacing={0.5}>
+                                      <Stack
+                                        direction="row"
+                                        alignItems="center"
+                                        spacing={0.5}>
+                                        <Bell size={14} color="#ed6c02" />
+                                        <Typography
+                                          variant="caption"
+                                          fontWeight={600}
+                                          color="warning.dark">
+                                          To'lov{" "}
+                                          {(() => {
+                                            try {
+                                              const date = new Date(
+                                                paymentWithReminder.reminderDate,
+                                              );
+                                              return isNaN(date.getTime()) ?
+                                                  "Noto'g'ri sana"
+                                                : format(date, "dd.MM.yyyy");
+                                            } catch {
+                                              return "Noto'g'ri sana";
+                                            }
+                                          })()}{" "}
+                                          kuniga ko'chirildi
+                                        </Typography>
+                                      </Stack>
+                                      {paymentWithReminder?.reminderComment && (
+                                        <Typography
+                                          variant="caption"
+                                          color="text.secondary"
+                                          sx={{ pl: 2.5 }}>
+                                          💬{" "}
+                                          {paymentWithReminder.reminderComment}
+                                        </Typography>
+                                      )}
+                                    </Stack>
+                                  </Box>
+                                )}
+                            </Stack>
+                          </Box>
+                        </Collapse>
+                      </TableCell>
+                    </TableRow>
+                  </>
+                );
+              })}
             </TableBody>
           </Table>
         </TableContainer>
@@ -810,9 +1300,10 @@ const PaymentScheduleNew: FC<PaymentScheduleProps> = ({
           amount={paymentModal.amount}
           contractId={contractId || debtorId || ""}
           isPayAll={paymentModal.isPayAll}
+          isInitialPayment={paymentModal.isInitialPayment}
           paymentId={paymentModal.paymentId}
-          isDebtPayment={paymentModal.isDebtPayment} // ✅ YANGI: Qarz to'lovi flag'i
-          originalAmount={paymentModal.originalAmount} // ✅ YANGI: Asosiy oylik to'lov miqdori
+          isDebtPayment={paymentModal.isDebtPayment}
+          originalAmount={paymentModal.originalAmount}
           onClose={() =>
             setPaymentModal({
               open: false,
@@ -822,6 +1313,7 @@ const PaymentScheduleNew: FC<PaymentScheduleProps> = ({
               month: undefined,
               isDebtPayment: false,
               originalAmount: undefined,
+              isInitialPayment: false,
             })
           }
           onSuccess={handlePaymentSuccess}
@@ -844,7 +1336,6 @@ const PaymentScheduleNew: FC<PaymentScheduleProps> = ({
           onSuccess={handleReminderSuccess}
         />
       )}
-
     </>
   );
 };

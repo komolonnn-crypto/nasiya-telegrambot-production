@@ -198,6 +198,19 @@ export const payAllRemaining = createAsyncThunk(
   },
 );
 
+export const payInitialPayment = createAsyncThunk(
+  "customer/payInitialPayment",
+  async (payData: IPaydata, { dispatch, rejectWithValue }) => {
+    try {
+      const response = await authApi.post("/payment/pay-initial", payData);
+      await dispatch(getContract(payData.customerId));
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data || error.message);
+    }
+  },
+);
+
 export const postponePayment = createAsyncThunk(
   "customer/postponePayment",
   async (
