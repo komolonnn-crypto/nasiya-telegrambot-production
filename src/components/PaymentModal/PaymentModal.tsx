@@ -28,6 +28,7 @@ import { useAppDispatch } from "../../hooks/useAppDispatch";
 import {
   payAllRemaining,
   payDebt,
+  payInitialPayment,
   payNewDebt,
 } from "../../store/actions/customerActions";
 import { PaymentCalculator } from "../PaymentCalculator";
@@ -41,6 +42,7 @@ interface PaymentModalProps {
   contractId: string;
   paymentId?: string;
   isPayAll?: boolean;
+  isInitialPayment?: boolean;
   customerId?: string;
   debtorId?: string;
   targetMonth?: number;
@@ -56,6 +58,7 @@ const PaymentModal: FC<PaymentModalProps> = ({
   contractId,
   paymentId,
   isPayAll,
+  isInitialPayment = false,
   customerId,
   debtorId,
   targetMonth,
@@ -87,7 +90,10 @@ const PaymentModal: FC<PaymentModalProps> = ({
 
   const totalAmountInDollar = dollarAmount + sumAmount / currencyCourse;
 
-  const isUnderpaid = totalAmountInDollar > 0 && totalAmountInDollar < amount;
+  const isUnderpaid =
+    !isInitialPayment &&
+    totalAmountInDollar > 0 &&
+    totalAmountInDollar < amount;
   const remainingDebt = amount - totalAmountInDollar;
 
   useEffect(() => {
@@ -176,7 +182,7 @@ const PaymentModal: FC<PaymentModalProps> = ({
     }
 
     const basePayload = {
-      amount: totalAmountInDollar, // Jami summa dolarda
+      amount: totalAmountInDollar,
       notes: note.trim(),
       customerId,
       currencyDetails: {
@@ -184,13 +190,20 @@ const PaymentModal: FC<PaymentModalProps> = ({
         sum: sumAmount,
       },
       currencyCourse,
-      targetMonth: targetMonth || 1,
+      targetMonth: isInitialPayment ? 0 : targetMonth || 1,
       nextPaymentDate: nextPaymentDate || undefined,
-      paymentMethod: paymentMethod, // ✅ YANGI: To'lov usuli
+      paymentMethod: paymentMethod,
     };
 
     try {
-      if (isPayAll) {
+      if (isInitialPayment) {
+        const payload: IPaydata = {
+          ...basePayload,
+          id: contractId,
+          targetMonth: 0,
+        };
+        await dispatch(payInitialPayment(payload)).unwrap();
+      } else if (isPayAll) {
         const payload = { ...basePayload, id: contractId };
         await dispatch(payAllRemaining(payload)).unwrap();
       } else if (paymentId) {
@@ -204,7 +217,7 @@ const PaymentModal: FC<PaymentModalProps> = ({
           },
           currencyCourse,
           nextPaymentDate: nextPaymentDate || undefined,
-          paymentMethod: paymentMethod, // ✅ YANGI: To'lov usuli
+          paymentMethod: paymentMethod,
         });
       } else {
         const payload: IPaydata = {
@@ -249,8 +262,7 @@ const PaymentModal: FC<PaymentModalProps> = ({
           boxShadow: shadows.xl,
           m: { xs: 0, sm: 2 },
         },
-      }}
-    >
+      }}>
       <DialogTitle sx={{ pb: 1, px: { xs: 2, sm: 3 }, pt: { xs: 2, sm: 3 } }}>
         <Box display="flex" alignItems="center" gap={1.5}>
           <Box
@@ -261,23 +273,23 @@ const PaymentModal: FC<PaymentModalProps> = ({
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-            }}
-          >
+            }}>
             <CreditCard size={24} color="white" />
           </Box>
           <Box>
             <Typography variant="h6" fontWeight={700}>
-              {isPayAll
-                ? "Barchasini to'lash"
-                : isDebtPayment
-                  ? "Qarzni to'lash"
-                  : "To'lov"}
-              {targetMonth && !isPayAll && (
+              {isInitialPayment ?
+                "Boshlang'ich to'lov "
+              : isPayAll ?
+                "Barchasini to'lash"
+              : isDebtPayment ?
+                "Qarzni to'lash"
+              : "To'lov"}
+              {targetMonth && !isPayAll && !isInitialPayment && (
                 <Typography
                   component="span"
                   color="primary.main"
-                  sx={{ ml: 1, fontSize: "1.1rem" }}
-                >
+                  sx={{ ml: 1, fontSize: "1.1rem" }}>
                   ({targetMonth}-oy)
                 </Typography>
               )}
@@ -285,15 +297,16 @@ const PaymentModal: FC<PaymentModalProps> = ({
             <Typography
               variant="body2"
               color="text.secondary"
-              sx={{ fontSize: { xs: "0.75rem", sm: "0.875rem" } }}
-            >
-              {isDebtPayment
-                ? `${targetMonth}-oy uchun qolgan qism`
-                : isPayAll
-                  ? "Barcha to'lovlar"
-                  : targetMonth
-                    ? `${targetMonth}-oylik to'lov`
-                    : "To'lov ma'lumotlari"}
+              sx={{ fontSize: { xs: "0.75rem", sm: "0.875rem" } }}>
+              {isInitialPayment ?
+                "Oldindan to'lov — kassada tasdiqlashi kutiladi"
+              : isDebtPayment ?
+                `${targetMonth}-oy uchun qolgan qism`
+              : isPayAll ?
+                "Barcha to'lovlar"
+              : targetMonth ?
+                `${targetMonth}-oylik to'lov`
+              : "To'lov ma'lumotlari"}
             </Typography>
           </Box>
         </Box>
@@ -305,13 +318,11 @@ const PaymentModal: FC<PaymentModalProps> = ({
             flexDirection: "column",
             gap: { xs: 2, sm: 2.5 },
             mt: 1,
-          }}
-        >
+          }}>
           {error && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-            >
+              animate={{ opacity: 1, y: 0 }}>
               <Alert severity="error" sx={{ borderRadius: borderRadius.md }}>
                 {error}
               </Alert>
@@ -325,48 +336,48 @@ const PaymentModal: FC<PaymentModalProps> = ({
               borderRadius: borderRadius.md,
               color: "white",
               boxShadow: shadows.colored("rgba(37, 99, 235, 0.15)"),
-            }}
-          >
+            }}>
             <Box display="flex" alignItems="center" gap={1} mb={1}>
               <DollarSign size={20} />
-              <Typography variant="caption" sx={{ opacity: 0.9 }}>
-                {isDebtPayment
-                  ? "Qolgan qarz:"
-                  : isPayAll
-                    ? "Jami qolgan qarz:"
-                    : "To'lanadigan summa:"}
+              <Typography variant="caption" sx={{ opacity: 2 }}>
+                {isInitialPayment ?
+                  "Boshlang'ich to'lov summasi:"
+                : isDebtPayment ?
+                  "Qolgan qarz:"
+                : isPayAll ?
+                  "Jami qolgan qarz:"
+                : "To'lanadigan summa:"}
               </Typography>
             </Box>
             <Typography variant="h5" fontWeight="bold">
-              {amount.toLocaleString()} $
+              {isInitialPayment && amount === 0 ?
+                "Summani kiriting"
+              : `${amount.toLocaleString()} $`}
             </Typography>
 
             {isDebtPayment && originalAmount && (
               <Typography
                 variant="caption"
-                sx={{ opacity: 0.8, display: "block", mt: 0.5 }}
-              >
+                sx={{ opacity: 0.8, display: "block", mt: 0.5 }}>
                 Asosiy oylik to'lov: ${originalAmount.toLocaleString()} dan
                 qolgan qism
               </Typography>
             )}
 
             {/* ✅ YANGI: Ortiqcha to'lash haqida ogohlantirish */}
-            {dollarAmount > amount && (
+            {!isInitialPayment && dollarAmount > amount && (
               <Box
                 mt={1.5}
                 p={1.5}
                 bgcolor="rgba(56, 239, 125, 0.2)"
                 borderRadius={1}
-                border="1px solid rgba(56, 239, 125, 0.4)"
-              >
+                border="1px solid rgba(56, 239, 125, 0.4)">
                 <Typography variant="body2" fontWeight={600}>
                   Ortiqcha: ${(dollarAmount - amount).toFixed(2)}
                 </Typography>
                 <Typography
                   variant="caption"
-                  sx={{ opacity: 0.9, display: "block", mt: 0.5 }}
-                >
+                  sx={{ opacity: 0.9, display: "block", mt: 0.5 }}>
                   Bu summa keyingi oyga avtomatik o'tkaziladi (kassa
                   tasdiqlangandan keyin)
                 </Typography>
@@ -379,15 +390,13 @@ const PaymentModal: FC<PaymentModalProps> = ({
                 p={1.5}
                 bgcolor="rgba(235, 51, 73, 0.2)"
                 borderRadius={1}
-                border="1px solid rgba(235, 51, 73, 0.4)"
-              >
+                border="1px solid rgba(235, 51, 73, 0.4)">
                 <Typography variant="body2" fontWeight={600}>
                   Kam to'lov: ${remainingDebt.toFixed(2)}
                 </Typography>
                 <Typography
                   variant="caption"
-                  sx={{ opacity: 0.9, display: "block", mt: 0.5 }}
-                >
+                  sx={{ opacity: 0.9, display: "block", mt: 0.5 }}>
                   Qolgan qarz vaqtini kiriting
                 </Typography>
               </Box>
@@ -399,8 +408,7 @@ const PaymentModal: FC<PaymentModalProps> = ({
                 p={1.5}
                 bgcolor="rgba(56, 239, 125, 0.2)"
                 borderRadius={1}
-                border="1px solid rgba(56, 239, 125, 0.4)"
-              >
+                border="1px solid rgba(56, 239, 125, 0.4)">
                 <Typography variant="caption" sx={{ opacity: 0.9 }}>
                   Barcha qolgan oylar uchun to'lov amalga oshiriladi
                 </Typography>
@@ -478,8 +486,7 @@ const PaymentModal: FC<PaymentModalProps> = ({
             <Select
               value={paymentMethod}
               onChange={(e) => setPaymentMethod(e.target.value)}
-              label="To'lov usuli"
-            >
+              label="To'lov usuli">
               <MenuItem value="">
                 <em>Tanlang</em>
               </MenuItem>
@@ -498,8 +505,7 @@ const PaymentModal: FC<PaymentModalProps> = ({
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
-            }}
-          >
+            }}>
             <Typography variant="caption" color="text.secondary">
               Kurs: 1$ = {currencyCourse.toLocaleString()} so'm
             </Typography>
@@ -507,20 +513,18 @@ const PaymentModal: FC<PaymentModalProps> = ({
               <Typography
                 variant="caption"
                 color="primary.main"
-                fontWeight="bold"
-              >
+                fontWeight="bold">
                 Jami: {dollarAmount.toFixed(2)} $ + {sumAmount.toFixed(0)} so'm
                 = {totalAmountInDollar.toFixed(2)} $
               </Typography>
             )}
           </Box>
 
-          {totalAmountInDollar > 0 && (
+          {!isInitialPayment && totalAmountInDollar > 0 && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
-              transition={{ duration: 0.3 }}
-            >
+              transition={{ duration: 0.3 }}>
               <PaymentCalculator
                 amount={totalAmountInDollar}
                 monthlyPayment={amount}
@@ -532,16 +536,14 @@ const PaymentModal: FC<PaymentModalProps> = ({
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
-              transition={{ duration: 0.3 }}
-            >
+              transition={{ duration: 0.3 }}>
               <Box>
                 <Box display="flex" alignItems="center" gap={1} mb={1}>
                   <Calendar size={20} color="#EF4444" />
                   <Typography
                     variant="subtitle2"
                     fontWeight={600}
-                    color="error.main"
-                  >
+                    color="error.main">
                     Qolgani qachon to'laysiz? *
                   </Typography>
                 </Box>
@@ -553,11 +555,11 @@ const PaymentModal: FC<PaymentModalProps> = ({
                   required
                   error={isUnderpaid && !nextPaymentDate}
                   helperText={
-                    isUnderpaid && !nextPaymentDate
-                      ? "Kam to'lov qilganda sana va vaqt majburiy!"
-                      : `Qolgan $${remainingDebt.toFixed(
-                          2,
-                        )} ni to'lash sanasi va vaqti`
+                    isUnderpaid && !nextPaymentDate ?
+                      "Kam to'lov qilganda sana va vaqt majburiy!"
+                    : `Qolgan $${remainingDebt.toFixed(
+                        2,
+                      )} ni to'lash sanasi va vaqti`
                   }
                   InputProps={{
                     inputProps: {
@@ -591,8 +593,7 @@ const PaymentModal: FC<PaymentModalProps> = ({
               startAdornment: (
                 <InputAdornment
                   position="start"
-                  sx={{ alignSelf: "flex-start", mt: 2 }}
-                >
+                  sx={{ alignSelf: "flex-start", mt: 2 }}>
                   <FileText size={20} color="#6B7280" />
                 </InputAdornment>
               ),
@@ -610,8 +611,7 @@ const PaymentModal: FC<PaymentModalProps> = ({
           p: { xs: 2, sm: 3 },
           gap: 1.5,
           flexDirection: { xs: "column", sm: "row" },
-        }}
-      >
+        }}>
         <Button
           onClick={onClose}
           disabled={loading}
@@ -625,8 +625,7 @@ const PaymentModal: FC<PaymentModalProps> = ({
             "&:disabled": {
               opacity: 0.6,
             },
-          }}
-        >
+          }}>
           Bekor qilish
         </Button>
         <Button
@@ -644,9 +643,8 @@ const PaymentModal: FC<PaymentModalProps> = ({
             fontWeight: 700,
             borderRadius: borderRadius.md,
             background: loading ? "rgba(0, 0, 0, 0.12)" : "#10b981",
-            boxShadow: loading
-              ? "none"
-              : shadows.colored("rgba(16, 185, 129, 0.15)"),
+            boxShadow:
+              loading ? "none" : shadows.colored("rgba(16, 185, 129, 0.15)"),
             minWidth: { xs: "100%", sm: "auto" },
             whiteSpace: "nowrap",
             "&:hover": {
@@ -656,9 +654,12 @@ const PaymentModal: FC<PaymentModalProps> = ({
               background: "rgba(0, 0, 0, 0.12)",
               color: "rgba(0, 0, 0, 0.38)",
             },
-          }}
-        >
-          {loading ? "Kutish..." : isPayAll ? "To'lash" : "To'lash"}
+          }}>
+          {loading ?
+            "Kutish..."
+          : isPayAll ?
+            "To'lash"
+          : "To'lash"}
         </Button>
       </DialogActions>
     </Dialog>
