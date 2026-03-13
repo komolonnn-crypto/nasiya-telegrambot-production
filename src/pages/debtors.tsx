@@ -15,7 +15,6 @@ import {
   Calendar,
   X,
   Clock,
-  TrendingUp,
   AlertCircle,
   DollarSign,
   Banknote,
@@ -118,6 +117,7 @@ export default function DebtorsPage({ activeTabIndex, index }: TabPageProps) {
   const [selectedCustomer, setSelectedCustomer] = useState<ICustomer | null>(
     null,
   );
+  const [selectedContractId, setSelectedContractId] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [filterType, setFilterType] = useState<FilterType>("all");
@@ -135,6 +135,20 @@ export default function DebtorsPage({ activeTabIndex, index }: TabPageProps) {
       dispatch(getAllCustomersDebtors(dateFilter));
     }
   }, [activeTabIndex, index, selectedDate, dispatch]);
+
+  const handleContractClick = (contract: IDebtorContract) => {
+    setSelectedCustomer({
+      _id: contract.customerId,
+      fullName: contract.fullName,
+      phoneNumber: contract.phoneNumber,
+    });
+    setSelectedContractId(contract._id);
+  };
+
+  const handleCloseDialog = () => {
+    setSelectedCustomer(null);
+    setSelectedContractId("");
+  };
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSelectedDate(e.target.value);
@@ -159,7 +173,6 @@ export default function DebtorsPage({ activeTabIndex, index }: TabPageProps) {
 
     const pendingPayments: IDebtorContract[] = [];
     const todayPayments: IDebtorContract[] = [];
-    const upcomingPayments: IDebtorContract[] = [];
     const overduePayments: IDebtorContract[] = [];
 
     filtered.forEach((contract) => {
@@ -182,7 +195,6 @@ export default function DebtorsPage({ activeTabIndex, index }: TabPageProps) {
 
       if (diffDays < 0) overduePayments.push(contract);
       else if (diffDays === 0) todayPayments.push(contract);
-      else upcomingPayments.push(contract);
     });
 
     const sortByDate = (a: IDebtorContract, b: IDebtorContract) => {
@@ -195,7 +207,6 @@ export default function DebtorsPage({ activeTabIndex, index }: TabPageProps) {
 
     const sortedPending = pendingPayments.sort(sortByDate);
     const sortedToday = todayPayments.sort(sortByDate);
-    const sortedUpcoming = upcomingPayments.sort(sortByDate);
     const sortedOverdue = overduePayments.sort(
       (a, b) => (b.delayDays || 0) - (a.delayDays || 0),
     );
@@ -217,26 +228,12 @@ export default function DebtorsPage({ activeTabIndex, index }: TabPageProps) {
     return {
       pending: sortedPending,
       today: sortedToday,
-      upcoming: sortedUpcoming,
       overdue: sortedOverdue,
       allTotal: filtered.length,
       displayData,
       showGrouped: filterType === "all",
     };
   }, [customersDebtor, debouncedSearch, filterType]);
-
-  const handleContractClick = (contract: IDebtorContract) => {
-    const customer: ICustomer = {
-      _id: contract.customerId,
-      fullName: contract.fullName,
-      phoneNumber: contract.phoneNumber,
-    };
-    setSelectedCustomer(customer);
-  };
-
-  const handleCloseDetails = () => {
-    setSelectedCustomer(null);
-  };
 
   if (isLoading) return <Loader />;
 
@@ -516,11 +513,7 @@ export default function DebtorsPage({ activeTabIndex, index }: TabPageProps) {
                 accentColor="#F59E0B"
               />
               {groupedDebtors.pending.map((contract) => (
-                <ContractDebtorItem
-                  key={contract._id}
-                  contract={contract}
-                  onClick={handleContractClick}
-                />
+                <ContractDebtorItem key={contract._id} contract={contract} />
               ))}
             </Box>
           )}
@@ -534,24 +527,6 @@ export default function DebtorsPage({ activeTabIndex, index }: TabPageProps) {
                 accentColor="#4F46E5"
               />
               {groupedDebtors.today.map((contract) => (
-                <ContractDebtorItem
-                  key={contract._id}
-                  contract={contract}
-                  onClick={handleContractClick}
-                />
-              ))}
-            </Box>
-          )}
-
-          {groupedDebtors.upcoming.length > 0 && (
-            <Box>
-              <SectionHeader
-                icon={<TrendingUp size={15} />}
-                label="YAQIN TO'LOVLAR"
-                count={groupedDebtors.upcoming.length}
-                accentColor="#8B5CF6"
-              />
-              {groupedDebtors.upcoming.map((contract) => (
                 <ContractDebtorItem
                   key={contract._id}
                   contract={contract}
@@ -612,7 +587,9 @@ export default function DebtorsPage({ activeTabIndex, index }: TabPageProps) {
               <ContractDebtorItem
                 key={contract._id}
                 contract={contract}
-                onClick={handleContractClick}
+                onClick={
+                  filterType === "overdue" ? handleContractClick : undefined
+                }
               />
             ))}
           </Box>
@@ -662,7 +639,8 @@ export default function DebtorsPage({ activeTabIndex, index }: TabPageProps) {
       <CustomerDialog
         open={!!selectedCustomer}
         customer={selectedCustomer}
-        onClose={handleCloseDetails}
+        onClose={handleCloseDialog}
+        initialContractId={selectedContractId}
       />
     </Box>
   );

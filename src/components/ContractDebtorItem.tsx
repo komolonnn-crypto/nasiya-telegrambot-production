@@ -1,12 +1,14 @@
 import { memo } from "react";
+
 import { Box, Typography } from "@mui/material";
-import { motion } from "framer-motion";
 import { Clock, Package, CheckCircle2, AlertCircle } from "lucide-react";
+
+import { motion } from "framer-motion";
 import { IDebtorContract } from "../types/ICustomer";
 
 interface ContractDebtorItemProps {
   contract: IDebtorContract;
-  onClick: (contract: IDebtorContract) => void;
+  onClick?: (contract: IDebtorContract) => void;
 }
 
 const MotionBox = motion(Box);
@@ -36,10 +38,16 @@ const ContractDebtorItem: React.FC<ContractDebtorItemProps> = memo(
     };
 
     const getPaidMonths = () => {
-      if (contract.paidMonthsCount !== undefined) return contract.paidMonthsCount;
-      if (contract.period && contract.monthlyPayment && contract.initialPayment !== undefined) {
+      if (contract.paidMonthsCount !== undefined)
+        return contract.paidMonthsCount;
+      if (
+        contract.period &&
+        contract.monthlyPayment &&
+        contract.initialPayment !== undefined
+      ) {
         return Math.floor(
-          (contract.totalPaid - contract.initialPayment) / contract.monthlyPayment,
+          (contract.totalPaid - contract.initialPayment) /
+            contract.monthlyPayment,
         );
       }
       return 0;
@@ -71,8 +79,8 @@ const ContractDebtorItem: React.FC<ContractDebtorItemProps> = memo(
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.2 }}
-        whileTap={{ scale: 0.99 }}
-        onClick={() => onClick(contract)}
+        whileTap={onClick ? { scale: 0.99 } : undefined}
+        onClick={onClick ? () => onClick(contract) : undefined}
         sx={{
           borderRadius: "14px",
           mb: 1.25,
@@ -81,7 +89,7 @@ const ContractDebtorItem: React.FC<ContractDebtorItemProps> = memo(
           bgcolor: bgColor,
           border: `1.5px solid ${borderColor}`,
           boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
-          cursor: "pointer",
+          cursor: onClick ? "pointer" : "default",
           transition: "all 0.2s",
           ...(isPending && {
             "&:hover, &:active": {
@@ -97,8 +105,7 @@ const ContractDebtorItem: React.FC<ContractDebtorItemProps> = memo(
               transform: "translateY(-1px)",
             },
           }),
-        }}
-      >
+        }}>
         {/* ── Row 1: day chip + name + amount ── */}
         <Box display="flex" alignItems="center" gap={0.75} mb={0.75}>
           {/* Day chip */}
@@ -110,18 +117,14 @@ const ContractDebtorItem: React.FC<ContractDebtorItemProps> = memo(
                 borderRadius: "6px",
                 bgcolor: isPending ? "rgba(255,255,255,0.4)" : "#EEF2FF",
                 flexShrink: 0,
-              }}
-            >
+              }}>
               <Typography
                 sx={{
                   fontSize: "0.7rem",
                   fontWeight: 800,
                   color: isPending ? "#065f46" : "#4F46E5",
-                }}
-              >
-                {new Date(
-                  contract.initialPaymentDueDate || contract.startDate!,
-                )
+                }}>
+                {new Date(contract.initialPaymentDueDate || contract.startDate!)
                   .getDate()
                   .toString()
                   .padStart(2, "0")}
@@ -139,8 +142,7 @@ const ContractDebtorItem: React.FC<ContractDebtorItemProps> = memo(
               overflow: "hidden",
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
-            }}
-          >
+            }}>
             {getDisplayName(contract.fullName)}
           </Typography>
 
@@ -155,16 +157,23 @@ const ContractDebtorItem: React.FC<ContractDebtorItemProps> = memo(
                 : "#10B981",
               whiteSpace: "nowrap",
               flexShrink: 0,
-            }}
-          >
+            }}>
             {contract.monthlyPayment?.toLocaleString()} {currencySymbol}
           </Typography>
         </Box>
 
         {/* ── Row 2: product + status chips + months ── */}
-        <Box display="flex" alignItems="center" justifyContent="space-between" gap={0.5}>
+        <Box
+          display="flex"
+          alignItems="center"
+          justifyContent="space-between"
+          gap={0.5}>
           {/* Product name */}
-          <Box display="flex" alignItems="center" gap={0.5} sx={{ minWidth: 0, flex: 1 }}>
+          <Box
+            display="flex"
+            alignItems="center"
+            gap={0.5}
+            sx={{ minWidth: 0, flex: 1 }}>
             <Package size={12} color="#94A3B8" style={{ flexShrink: 0 }} />
             <Typography
               sx={{
@@ -174,8 +183,7 @@ const ContractDebtorItem: React.FC<ContractDebtorItemProps> = memo(
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 whiteSpace: "nowrap",
-              }}
-            >
+              }}>
               {truncateProductName(contract.productName)}
             </Typography>
           </Box>
@@ -191,27 +199,24 @@ const ContractDebtorItem: React.FC<ContractDebtorItemProps> = memo(
                     py: 0.2,
                     borderRadius: "20px",
                     bgcolor:
-                      contract.remainingDebt <= 0
-                        ? "rgba(16,185,129,0.12)"
-                        : "rgba(239,68,68,0.1)",
+                      contract.remainingDebt <= 0 ?
+                        "rgba(16,185,129,0.12)"
+                      : "rgba(239,68,68,0.1)",
                     border: `1px solid ${contract.remainingDebt <= 0 ? "#6ee7b7" : "#fca5a5"}`,
                     display: "flex",
                     alignItems: "center",
                     gap: 0.3,
-                  }}
-                >
-                  {contract.remainingDebt <= 0 ? (
+                  }}>
+                  {contract.remainingDebt <= 0 ?
                     <CheckCircle2 size={10} color="#065f46" />
-                  ) : (
-                    <AlertCircle size={10} color="#b91c1c" />
-                  )}
+                  : <AlertCircle size={10} color="#b91c1c" />}
                   <Typography
                     sx={{
                       fontSize: "0.6rem",
                       fontWeight: 700,
-                      color: contract.remainingDebt <= 0 ? "#065f46" : "#b91c1c",
-                    }}
-                  >
+                      color:
+                        contract.remainingDebt <= 0 ? "#065f46" : "#b91c1c",
+                    }}>
                     {contract.remainingDebt <= 0 ? "To'liq" : "Qisman"}
                   </Typography>
                 </Box>
@@ -228,9 +233,13 @@ const ContractDebtorItem: React.FC<ContractDebtorItemProps> = memo(
                       "0%, 100%": { opacity: 1 },
                       "50%": { opacity: 0.6 },
                     },
-                  }}
-                >
-                  <Typography sx={{ fontSize: "0.6rem", fontWeight: 700, color: "#92400e" }}>
+                  }}>
+                  <Typography
+                    sx={{
+                      fontSize: "0.6rem",
+                      fontWeight: 700,
+                      color: "#92400e",
+                    }}>
                     ⏳ Kassa
                   </Typography>
                 </Box>
@@ -249,17 +258,16 @@ const ContractDebtorItem: React.FC<ContractDebtorItemProps> = memo(
                   display: "flex",
                   alignItems: "center",
                   gap: 0.3,
-                }}
-              >
+                }}>
                 <Clock size={10} color={getDelayColor(contract.delayDays)} />
                 <Typography
                   sx={{
                     fontSize: "0.6rem",
                     fontWeight: 700,
                     color: getDelayColor(contract.delayDays),
-                  }}
-                >
-                  {contract.delayDays > 99 ? "99+" : contract.delayDays} kun kech
+                  }}>
+                  {contract.delayDays > 99 ? "99+" : contract.delayDays} kun
+                  kech
                 </Typography>
               </Box>
             )}
@@ -275,23 +283,27 @@ const ContractDebtorItem: React.FC<ContractDebtorItemProps> = memo(
                     py: 0.2,
                     borderRadius: "20px",
                     bgcolor:
-                      contract.nextPaymentStatus === "TODAY"
-                        ? "rgba(102,126,234,0.15)"
-                        : "rgba(240,147,251,0.15)",
+                      contract.nextPaymentStatus === "TODAY" ?
+                        "rgba(102,126,234,0.15)"
+                      : "rgba(240,147,251,0.15)",
                     border: `1px solid ${
-                      contract.nextPaymentStatus === "TODAY" ? "#a5b4fc" : "#e9d5ff"
+                      contract.nextPaymentStatus === "TODAY" ?
+                        "#a5b4fc"
+                      : "#e9d5ff"
                     }`,
-                  }}
-                >
+                  }}>
                   <Typography
                     sx={{
                       fontSize: "0.6rem",
                       fontWeight: 700,
                       color:
-                        contract.nextPaymentStatus === "TODAY" ? "#4338ca" : "#9333ea",
-                    }}
-                  >
-                    {contract.nextPaymentStatus === "TODAY" ? "Bugun" : "Yaqinda"}
+                        contract.nextPaymentStatus === "TODAY" ?
+                          "#4338ca"
+                        : "#9333ea",
+                    }}>
+                    {contract.nextPaymentStatus === "TODAY" ?
+                      "Bugun"
+                    : "Yaqinda"}
                   </Typography>
                 </Box>
               )}
@@ -304,9 +316,10 @@ const ContractDebtorItem: React.FC<ContractDebtorItemProps> = memo(
                   fontWeight: 600,
                   color: "#94A3B8",
                   whiteSpace: "nowrap",
-                }}
-              >
-                <Box component="span" sx={{ fontWeight: 700, color: "#4F46E5" }}>
+                }}>
+                <Box
+                  component="span"
+                  sx={{ fontWeight: 700, color: "#4F46E5" }}>
                   {paidMonths}
                 </Box>
                 /{totalMonths} oy

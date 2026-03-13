@@ -1,4 +1,6 @@
-import { FC, useState } from "react";
+import React, { FC, useState } from "react";
+import { format, addMonths } from "date-fns";
+
 import {
   Box,
   Chip,
@@ -17,7 +19,7 @@ import {
   useTheme,
   useMediaQuery,
 } from "@mui/material";
-import { format, addMonths } from "date-fns";
+
 import {
   MdCheckCircle,
   MdPayment,
@@ -25,7 +27,9 @@ import {
   MdExpandMore,
   MdExpandLess,
 } from "react-icons/md";
+
 import { AlertCircle, Clock, Bell } from "lucide-react";
+
 import { useAlert } from "../AlertSystem";
 import PaymentModal from "../PaymentModal/PaymentModal";
 import PaymentReminderDialog from "../PaymentReminderDialog";
@@ -613,10 +617,9 @@ const PaymentScheduleNew: FC<PaymentScheduleProps> = ({
                 }
 
                 return (
-                  <>
+                  <React.Fragment key={`row-${item.month}`}>
                     {/* Main Table Row */}
                     <TableRow
-                      key={`payment-${item.month}`}
                       hover
                       sx={{
                         cursor: "pointer",
@@ -633,40 +636,85 @@ const PaymentScheduleNew: FC<PaymentScheduleProps> = ({
                       }}
                       onClick={() => toggleExpand(item.month)}>
                       {/* Month/Type Column */}
-                      <TableCell sx={{ py: { xs: 0.75, sm: 1.5 } }}>
+                      <TableCell
+                        sx={{
+                          py: { xs: 0.75, sm: 1.5 },
+                          maxWidth: isMobile ? 64 : "auto",
+                        }}>
                         <Stack
                           direction="row"
                           alignItems="center"
-                          spacing={isMobile ? 0.5 : 1}>
+                          spacing={isMobile ? 0.3 : 1}>
                           {isPast && !item.isPaid && !isMobile && (
                             <AlertCircle size={16} color="#d32f2f" />
                           )}
                           {item.isPaid && !isMobile && (
                             <MdCheckCircle size={18} color="#2e7d32" />
                           )}
-                          <Typography
-                            variant="body2"
-                            fontWeight={600}
-                            color={
-                              isPast && !item.isPaid ?
-                                "error.main"
-                              : "text.primary"
-                            }
-                            sx={{
-                              fontSize: {
-                                xs: "0.65rem",
-                                sm: "0.8rem",
-                                md: "0.875rem",
-                              },
-                            }}>
-                            {item.isInitial ?
-                              isMobile ?
-                                "0"
-                              : "Boshlang'ich"
-                            : isMobile ?
-                              `${item.month}`
-                            : `${item.month}-oy`}
-                          </Typography>
+
+                          {/* Mobile status icons */}
+                          {isMobile && item.isPaid && (
+                            <MdCheckCircle size={12} color="#2e7d32" />
+                          )}
+                          {isMobile &&
+                            !item.isPaid &&
+                            isPast &&
+                            !hasPendingPayment && (
+                              <AlertCircle size={11} color="#d32f2f" />
+                            )}
+                          {isMobile && hasPendingPayment && (
+                            <Clock size={11} color="#ed6c02" />
+                          )}
+
+                          {item.isInitial ?
+                            isMobile ?
+                              <Box
+                                sx={{
+                                  px: 0.5,
+                                  py: 0.1,
+                                  bgcolor: item.isPaid ? "#D1FAE5" : "#EEF2FF",
+                                  borderRadius: "4px",
+                                  border: `1px solid ${item.isPaid ? "#6EE7B7" : "#C7D2FE"}`,
+                                  flexShrink: 0,
+                                }}>
+                                <Typography
+                                  sx={{
+                                    fontSize: "0.58rem",
+                                    fontWeight: 800,
+                                    color: item.isPaid ? "#065f46" : "#4F46E5",
+                                    whiteSpace: "nowrap",
+                                    lineHeight: 1.3,
+                                  }}>
+                                  B. To'lov
+                                </Typography>
+                              </Box>
+                            : <Typography
+                                variant="body2"
+                                fontWeight={600}
+                                sx={{
+                                  fontSize: { sm: "0.8rem", md: "0.875rem" },
+                                }}>
+                                Boshlang'ich
+                              </Typography>
+
+                          : <Typography
+                              variant="body2"
+                              fontWeight={600}
+                              color={
+                                isPast && !item.isPaid ?
+                                  "error.main"
+                                : "text.primary"
+                              }
+                              sx={{
+                                fontSize: {
+                                  xs: "0.65rem",
+                                  sm: "0.8rem",
+                                  md: "0.875rem",
+                                },
+                              }}>
+                              {isMobile ? `${item.month}` : `${item.month}-oy`}
+                            </Typography>
+                          }
                         </Stack>
                       </TableCell>
 
@@ -954,16 +1002,16 @@ const PaymentScheduleNew: FC<PaymentScheduleProps> = ({
                             )}
 
                           {/* Pending chip — initial uchun "Kassada", oylik uchun "Kutish" */}
-                          {hasPendingPayment && !isMobile && (
+                          {hasPendingPayment && (
                             <Chip
-                              icon={<Clock size={12} />}
+                              icon={<Clock size={isMobile ? 10 : 12} />}
                               label={item.isInitial ? "Kassada" : "Kutish"}
                               size="small"
                               color="warning"
                               variant="outlined"
                               sx={{
-                                fontSize: "0.65rem",
-                                height: 20,
+                                fontSize: isMobile ? "0.55rem" : "0.65rem",
+                                height: isMobile ? 18 : 20,
                               }}
                             />
                           )}
@@ -1285,7 +1333,7 @@ const PaymentScheduleNew: FC<PaymentScheduleProps> = ({
                         </Collapse>
                       </TableCell>
                     </TableRow>
-                  </>
+                  </React.Fragment>
                 );
               })}
             </TableBody>

@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+
 import {
   Dialog,
   DialogTitle,
@@ -10,6 +11,7 @@ import {
   Alert,
   Chip,
 } from "@mui/material";
+
 import { Calendar, CalendarDays, Clock } from "lucide-react";
 
 interface PaymentPostponeDialogProps {
@@ -50,7 +52,7 @@ const PaymentPostponeDialog: React.FC<PaymentPostponeDialogProps> = ({
   const currentDate = useMemo(() => new Date(payment.date), [payment.date]);
   const selectedDate = useMemo(
     () => new Date(selectedDateTime),
-    [selectedDateTime]
+    [selectedDateTime],
   );
 
   const formatCurrency = (amount: number) => {
@@ -84,15 +86,15 @@ const PaymentPostponeDialog: React.FC<PaymentPostponeDialogProps> = ({
   const todayOnly = new Date(
     today.getFullYear(),
     today.getMonth(),
-    today.getDate()
+    today.getDate(),
   );
   const selectedDateOnly = new Date(
     selectedDate.getFullYear(),
     selectedDate.getMonth(),
-    selectedDate.getDate()
+    selectedDate.getDate(),
   );
   const daysDifference = Math.round(
-    (selectedDateOnly.getTime() - todayOnly.getTime()) / (1000 * 60 * 60 * 24)
+    (selectedDateOnly.getTime() - todayOnly.getTime()) / (1000 * 60 * 60 * 24),
   );
 
   return (
@@ -106,8 +108,7 @@ const PaymentPostponeDialog: React.FC<PaymentPostponeDialogProps> = ({
           borderRadius: 2,
           boxShadow: "0 20px 40px rgba(0,0,0,0.1)",
         },
-      }}
-    >
+      }}>
       <DialogTitle sx={{ pb: 1 }}>
         <Box display="flex" alignItems="center" gap={1.5}>
           <Box
@@ -118,8 +119,7 @@ const PaymentPostponeDialog: React.FC<PaymentPostponeDialogProps> = ({
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-            }}
-          >
+            }}>
             <Calendar size={24} color="white" />
           </Box>
           <Box>
@@ -143,16 +143,14 @@ const PaymentPostponeDialog: React.FC<PaymentPostponeDialogProps> = ({
             borderRadius: 2,
             border: "1px solid",
             borderColor: "grey.200",
-          }}
-        >
+          }}>
           <Typography variant="subtitle2" color="text.secondary" gutterBottom>
             To'lov ma'lumotlari:
           </Typography>
           <Box
             display="flex"
             justifyContent="space-between"
-            alignItems="center"
-          >
+            alignItems="center">
             <Typography variant="h6" fontWeight={600} color="primary.main">
               {formatCurrency(payment.amount)}
             </Typography>
@@ -177,8 +175,7 @@ const PaymentPostponeDialog: React.FC<PaymentPostponeDialogProps> = ({
           <Typography
             variant="subtitle2"
             gutterBottom
-            sx={{ mb: 2, fontWeight: 600 }}
-          >
+            sx={{ mb: 2, fontWeight: 600 }}>
             Eslatma sanasi va vaqti:
           </Typography>
 
@@ -232,8 +229,7 @@ const PaymentPostponeDialog: React.FC<PaymentPostponeDialogProps> = ({
                     fontFamily: "inherit",
                     outline: "none",
                     backgroundColor: "white",
-                  }}
-                >
+                  }}>
                   {Array.from({ length: 24 }, (_, i) => (
                     <option key={i} value={i.toString().padStart(2, "0")}>
                       {i.toString().padStart(2, "0")}
@@ -263,8 +259,7 @@ const PaymentPostponeDialog: React.FC<PaymentPostponeDialogProps> = ({
                     fontFamily: "inherit",
                     outline: "none",
                     backgroundColor: "white",
-                  }}
-                >
+                  }}>
                   {Array.from({ length: 60 }, (_, i) => (
                     <option key={i} value={i.toString().padStart(2, "0")}>
                       {i.toString().padStart(2, "0")}
@@ -285,16 +280,14 @@ const PaymentPostponeDialog: React.FC<PaymentPostponeDialogProps> = ({
               borderRadius: 2,
               border: "1px solid",
               borderColor: "primary.light",
-            }}
-          >
+            }}>
             <Typography variant="subtitle2" color="primary.dark" gutterBottom>
               <CalendarDays /> Eslatma sanasi:
             </Typography>
             <Box
               display="flex"
               justifyContent="space-between"
-              alignItems="center"
-            >
+              alignItems="center">
               <Typography variant="body1" fontWeight={600} color="primary.main">
                 {formatDate(selectedDate)}
               </Typography>
@@ -308,13 +301,12 @@ const PaymentPostponeDialog: React.FC<PaymentPostponeDialogProps> = ({
             <Box mt={1}>
               <Chip
                 label={
-                  daysDifference === 0
-                    ? "Bugun eslatma"
-                    : daysDifference === 1
-                    ? "Ertaga eslatma"
-                    : daysDifference > 1
-                    ? `${daysDifference} kundan keyin`
-                    : `${Math.abs(daysDifference)} kun oldin` // Bu holat bo'lmasligi kerak
+                  daysDifference === 0 ? "Bugun eslatma"
+                  : daysDifference === 1 ?
+                    "Ertaga eslatma"
+                  : daysDifference > 1 ?
+                    `${daysDifference} kundan keyin`
+                  : `${Math.abs(daysDifference)} kun oldin` // Bu holat bo'lmasligi kerak
                 }
                 size="small"
                 color={daysDifference <= 1 ? "info" : "warning"}
@@ -342,8 +334,7 @@ const PaymentPostponeDialog: React.FC<PaymentPostponeDialogProps> = ({
             borderRadius: 2,
             fontWeight: 600,
           }}
-          disabled={loading}
-        >
+          disabled={loading}>
           Bekor qilish
         </Button>
         <Button
@@ -359,8 +350,7 @@ const PaymentPostponeDialog: React.FC<PaymentPostponeDialogProps> = ({
             "&:hover": {
               background: "#d97706",
             },
-          }}
-        >
+          }}>
           {loading ? "Saqlanmoqda..." : "Eslatma o'rnatish"}
         </Button>
       </DialogActions>

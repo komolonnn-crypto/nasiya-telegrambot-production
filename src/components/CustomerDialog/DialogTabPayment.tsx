@@ -1,3 +1,6 @@
+import { FC, useEffect, useState } from "react";
+import { useSelector } from "react-redux";
+
 import {
   Box,
   CircularProgress,
@@ -7,10 +10,18 @@ import {
   AccordionDetails,
   Button,
 } from "@mui/material";
-import { FC, useEffect, useState } from "react";
-import { ChevronDown, Package, Wallet, CreditCard, CheckCircle, FileText, AlertCircle } from "lucide-react";
+
+import {
+  ChevronDown,
+  Package,
+  Wallet,
+  CreditCard,
+  CheckCircle,
+  FileText,
+  AlertCircle,
+} from "lucide-react";
+
 import { useAppDispatch } from "../../hooks/useAppDispatch";
-import { useSelector } from "react-redux";
 import { RootState } from "../../store";
 import {
   getContract,
@@ -22,6 +33,7 @@ import { PaymentScheduleNew } from "../PaymentSchedule";
 
 interface IProps {
   customerId: string;
+  initialContractId?: string;
 }
 
 interface SectionHeaderProps {
@@ -34,9 +46,17 @@ interface SectionHeaderProps {
 function SectionHeader({ icon, label, count, color }: SectionHeaderProps) {
   return (
     <Box display="flex" alignItems="center" gap={0.75} mb={1.25} mt={2}>
-      <Box sx={{ width: 3.5, height: 18, borderRadius: "4px", bgcolor: color }} />
+      <Box
+        sx={{ width: 3.5, height: 18, borderRadius: "4px", bgcolor: color }}
+      />
       <Box sx={{ color }}>{icon}</Box>
-      <Typography sx={{ fontSize: "0.78rem", fontWeight: 700, color: "#334155", flex: 1 }}>
+      <Typography
+        sx={{
+          fontSize: "0.78rem",
+          fontWeight: 700,
+          color: "#334155",
+          flex: 1,
+        }}>
         {label}
       </Typography>
       <Box
@@ -46,8 +66,7 @@ function SectionHeader({ icon, label, count, color }: SectionHeaderProps) {
           borderRadius: "20px",
           bgcolor: `${color}15`,
           border: `1px solid ${color}30`,
-        }}
-      >
+        }}>
         <Typography sx={{ fontSize: "0.65rem", fontWeight: 700, color }}>
           {count}
         </Typography>
@@ -56,14 +75,15 @@ function SectionHeader({ icon, label, count, color }: SectionHeaderProps) {
   );
 }
 
-const DialogTabPayment: FC<IProps> = ({ customerId }) => {
+const DialogTabPayment: FC<IProps> = ({ customerId, initialContractId }) => {
   const dispatch = useAppDispatch();
   const { customerContracts, isLoading } = useSelector(
     (state: RootState) => state.customer,
   );
 
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [selectedContract, setSelectedContract] = useState<ICustomerContract | null>(null);
+  const [selectedContract, setSelectedContract] =
+    useState<ICustomerContract | null>(null);
   const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
 
   useEffect(() => {
@@ -90,15 +110,21 @@ const DialogTabPayment: FC<IProps> = ({ customerId }) => {
 
   const renderContracts = (contracts: ICustomerContract[], isPaid = false) =>
     contracts.map((contract) => {
-      const totalDebt = (contract.monthlyPayment || 0) * (contract.durationMonths || contract.period || 0);
-      const paidPct = totalDebt > 0
-        ? Math.round(((contract.totalPaid || 0) / totalDebt) * 100)
+      const totalDebt =
+        (contract.monthlyPayment || 0) *
+        (contract.durationMonths || contract.period || 0);
+      const paidPct =
+        totalDebt > 0 ?
+          Math.round(((contract.totalPaid || 0) / totalDebt) * 100)
         : 0;
       const accentColor = isPaid ? "#10B981" : "#4F46E5";
 
       return (
         <Accordion
           key={contract._id}
+          defaultExpanded={
+            !!initialContractId && contract._id === initialContractId
+          }
           elevation={0}
           disableGutters
           sx={{
@@ -112,8 +138,7 @@ const DialogTabPayment: FC<IProps> = ({ customerId }) => {
               boxShadow: "0 4px 16px rgba(0,0,0,0.1)",
               mb: 1.25,
             },
-          }}
-        >
+          }}>
           <AccordionSummary
             expandIcon={<ChevronDown size={18} color={accentColor} />}
             sx={{
@@ -121,8 +146,7 @@ const DialogTabPayment: FC<IProps> = ({ customerId }) => {
               py: 0,
               minHeight: "auto",
               "& .MuiAccordionSummary-content": { my: 1.25 },
-            }}
-          >
+            }}>
             {/* Summary header */}
             <Box sx={{ flex: 1, minWidth: 0 }}>
               {/* Row 1: chips + name */}
@@ -135,10 +159,17 @@ const DialogTabPayment: FC<IProps> = ({ customerId }) => {
                       borderRadius: "6px",
                       bgcolor: `${accentColor}15`,
                       flexShrink: 0,
-                    }}
-                  >
-                    <Typography sx={{ fontSize: "0.68rem", fontWeight: 800, color: accentColor }}>
-                      {new Date(contract.startDate).getDate().toString().padStart(2, "0")}
+                    }}>
+                    <Typography
+                      sx={{
+                        fontSize: "0.68rem",
+                        fontWeight: 800,
+                        color: accentColor,
+                      }}>
+                      {new Date(contract.startDate)
+                        .getDate()
+                        .toString()
+                        .padStart(2, "0")}
                     </Typography>
                   </Box>
                 )}
@@ -150,15 +181,27 @@ const DialogTabPayment: FC<IProps> = ({ customerId }) => {
                       borderRadius: "6px",
                       bgcolor: "#F0F9FF",
                       flexShrink: 0,
-                    }}
-                  >
-                    <Typography sx={{ fontSize: "0.62rem", fontWeight: 700, color: "#0EA5E9" }}>
+                    }}>
+                    <Typography
+                      sx={{
+                        fontSize: "0.62rem",
+                        fontWeight: 700,
+                        color: "#0EA5E9",
+                      }}>
                       {(contract as any).customId}
                     </Typography>
                   </Box>
                 )}
-                <Box display="flex" alignItems="center" gap={0.5} sx={{ flex: 1, minWidth: 0 }}>
-                  <Package size={13} color="#94A3B8" style={{ flexShrink: 0 }} />
+                <Box
+                  display="flex"
+                  alignItems="center"
+                  gap={0.5}
+                  sx={{ flex: 1, minWidth: 0 }}>
+                  <Package
+                    size={13}
+                    color="#94A3B8"
+                    style={{ flexShrink: 0 }}
+                  />
                   <Typography
                     sx={{
                       fontSize: "0.875rem",
@@ -167,8 +210,7 @@ const DialogTabPayment: FC<IProps> = ({ customerId }) => {
                       overflow: "hidden",
                       textOverflow: "ellipsis",
                       whiteSpace: "nowrap",
-                    }}
-                  >
+                    }}>
                     {contract.productName}
                   </Typography>
                 </Box>
@@ -185,10 +227,14 @@ const DialogTabPayment: FC<IProps> = ({ customerId }) => {
                     py: 0.25,
                     borderRadius: "8px",
                     bgcolor: `${accentColor}12`,
-                  }}
-                >
+                  }}>
                   <Wallet size={12} color={accentColor} />
-                  <Typography sx={{ fontSize: "0.72rem", fontWeight: 700, color: accentColor }}>
+                  <Typography
+                    sx={{
+                      fontSize: "0.72rem",
+                      fontWeight: 700,
+                      color: accentColor,
+                    }}>
                     {contract.monthlyPayment.toLocaleString()} $
                   </Typography>
                 </Box>
@@ -202,17 +248,28 @@ const DialogTabPayment: FC<IProps> = ({ customerId }) => {
                     py: 0.25,
                     borderRadius: "8px",
                     bgcolor: "#F1F5F9",
-                  }}
-                >
+                  }}>
                   <CreditCard size={12} color="#64748B" />
-                  <Typography sx={{ fontSize: "0.68rem", fontWeight: 600, color: "#64748B" }}>
-                    {contract.paidMonthsCount || 0}/{contract.durationMonths || contract.period || 0} oy
+                  <Typography
+                    sx={{
+                      fontSize: "0.68rem",
+                      fontWeight: 600,
+                      color: "#64748B",
+                    }}>
+                    {contract.paidMonthsCount || 0}/
+                    {contract.durationMonths || contract.period || 0} oy
                   </Typography>
                 </Box>
 
                 {/* Mini progress bar */}
                 <Box sx={{ flex: 1, minWidth: 40 }}>
-                  <Box sx={{ height: 4, borderRadius: "4px", bgcolor: "#F1F5F9", overflow: "hidden" }}>
+                  <Box
+                    sx={{
+                      height: 4,
+                      borderRadius: "4px",
+                      bgcolor: "#F1F5F9",
+                      overflow: "hidden",
+                    }}>
                     <Box
                       sx={{
                         height: "100%",
@@ -223,7 +280,8 @@ const DialogTabPayment: FC<IProps> = ({ customerId }) => {
                       }}
                     />
                   </Box>
-                  <Typography sx={{ fontSize: "0.58rem", color: "#94A3B8", mt: 0.2 }}>
+                  <Typography
+                    sx={{ fontSize: "0.58rem", color: "#94A3B8", mt: 0.2 }}>
                     {paidPct}%
                   </Typography>
                 </Box>
@@ -238,7 +296,9 @@ const DialogTabPayment: FC<IProps> = ({ customerId }) => {
               period={contract.durationMonths || contract.period || 12}
               monthlyPayment={contract.monthlyPayment}
               initialPayment={contract.initialPayment || 0}
-              initialPaymentDueDate={contract.initialPaymentDueDate || contract.startDate}
+              initialPaymentDueDate={
+                contract.initialPaymentDueDate || contract.startDate
+              }
               startDate={contract.startDate || ""}
               payments={contract.payments || []}
               remainingDebt={contract.remainingDebt || 0}
@@ -266,7 +326,14 @@ const DialogTabPayment: FC<IProps> = ({ customerId }) => {
     <Box sx={{ px: 1.75, pt: 1, pb: 4, maxWidth: 600, mx: "auto" }}>
       {/* Loading */}
       {isLoading && (
-        <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", py: 6, gap: 1.5 }}>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            py: 6,
+            gap: 1.5,
+          }}>
           <CircularProgress size={28} sx={{ color: "#4F46E5" }} />
           <Typography sx={{ fontSize: "0.82rem", color: "#94A3B8" }}>
             Shartnomalar yuklanmoqda...
@@ -283,13 +350,19 @@ const DialogTabPayment: FC<IProps> = ({ customerId }) => {
             bgcolor: "#FEF2F2",
             border: "1.5px solid #FECACA",
             textAlign: "center",
-          }}
-        >
+          }}>
           <AlertCircle size={32} color="#EF4444" />
-          <Typography sx={{ fontSize: "0.88rem", fontWeight: 600, color: "#EF4444", mt: 1 }}>
+          <Typography
+            sx={{
+              fontSize: "0.88rem",
+              fontWeight: 600,
+              color: "#EF4444",
+              mt: 1,
+            }}>
             Xatolik yuz berdi
           </Typography>
-          <Typography sx={{ fontSize: "0.78rem", color: "#64748B", mt: 0.5, mb: 1.5 }}>
+          <Typography
+            sx={{ fontSize: "0.78rem", color: "#64748B", mt: 0.5, mb: 1.5 }}>
             Shartnomalarni yuklashda xatolik
           </Typography>
           <Button
@@ -301,8 +374,7 @@ const DialogTabPayment: FC<IProps> = ({ customerId }) => {
               bgcolor: "#EF4444",
               fontSize: "0.8rem",
               "&:hover": { bgcolor: "#DC2626" },
-            }}
-          >
+            }}>
             Qayta urinish
           </Button>
         </Box>
@@ -317,8 +389,7 @@ const DialogTabPayment: FC<IProps> = ({ customerId }) => {
             bgcolor: "white",
             borderRadius: "16px",
             border: "1px solid #F1F5F9",
-          }}
-        >
+          }}>
           <FileText size={36} color="#CBD5E1" />
           <Typography sx={{ mt: 1.5, fontSize: "0.875rem", color: "#94A3B8" }}>
             Shartnomalar mavjud emas
@@ -327,30 +398,32 @@ const DialogTabPayment: FC<IProps> = ({ customerId }) => {
       )}
 
       {/* Active contracts */}
-      {customerContracts?.allContracts && customerContracts.allContracts.length > 0 && (
-        <>
-          <SectionHeader
-            icon={<FileText size={14} />}
-            label="Faol shartnomalar"
-            count={customerContracts.allContracts.length}
-            color="#4F46E5"
-          />
-          {renderContracts(customerContracts.allContracts, false)}
-        </>
-      )}
+      {customerContracts?.allContracts &&
+        customerContracts.allContracts.length > 0 && (
+          <>
+            <SectionHeader
+              icon={<FileText size={14} />}
+              label="Faol shartnomalar"
+              count={customerContracts.allContracts.length}
+              color="#4F46E5"
+            />
+            {renderContracts(customerContracts.allContracts, false)}
+          </>
+        )}
 
       {/* Paid contracts */}
-      {customerContracts?.paidContracts && customerContracts.paidContracts.length > 0 && (
-        <>
-          <SectionHeader
-            icon={<CheckCircle size={14} />}
-            label="Bajarilgan shartnomalar"
-            count={customerContracts.paidContracts.length}
-            color="#10B981"
-          />
-          {renderContracts(customerContracts.paidContracts, true)}
-        </>
-      )}
+      {customerContracts?.paidContracts &&
+        customerContracts.paidContracts.length > 0 && (
+          <>
+            <SectionHeader
+              icon={<CheckCircle size={14} />}
+              label="Bajarilgan shartnomalar"
+              count={customerContracts.paidContracts.length}
+              color="#10B981"
+            />
+            {renderContracts(customerContracts.paidContracts, true)}
+          </>
+        )}
 
       <ContractInfo
         open={drawerOpen}

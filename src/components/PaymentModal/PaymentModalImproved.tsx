@@ -1,4 +1,6 @@
 import { FC, useState, useEffect } from "react";
+import { motion } from "framer-motion";
+
 import {
   Dialog,
   DialogTitle,
@@ -12,15 +14,16 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
-import { motion } from "framer-motion";
-import { 
-  DollarSign, 
+
+import {
+  DollarSign,
   Calendar,
   FileText,
   CreditCard,
   CheckCircle,
   X,
 } from "lucide-react";
+
 import SmartButton from "../SmartButton/SmartButton";
 import { responsive } from "../../theme/responsive";
 import { borderRadius } from "../../theme/colors";
@@ -56,11 +59,11 @@ const PaymentModalImproved: FC<PaymentModalProps> = ({
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-  
+
   const [formData, setFormData] = useState<PaymentData>({
     amount: 0,
     notes: "",
-    paymentDate: new Date().toISOString().split('T')[0],
+    paymentDate: new Date().toISOString().split("T")[0],
   });
 
   const [errors, setErrors] = useState<FormErrors>({});
@@ -73,11 +76,11 @@ const PaymentModalImproved: FC<PaymentModalProps> = ({
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
-    
+
     if (!formData.amount || formData.amount <= 0) {
       newErrors.amount = "Summa kiritilishi shart";
     }
-    
+
     if (!formData.paymentDate) {
       newErrors.paymentDate = "Sana kiritilishi shart";
     }
@@ -96,7 +99,7 @@ const PaymentModalImproved: FC<PaymentModalProps> = ({
     setFormData({
       amount: 0,
       notes: "",
-      paymentDate: new Date().toISOString().split('T')[0],
+      paymentDate: new Date().toISOString().split("T")[0],
     });
     setErrors({});
     onClose();
@@ -116,8 +119,7 @@ const PaymentModalImproved: FC<PaymentModalProps> = ({
           my: isMobile ? 0 : 2,
           maxHeight: isMobile ? "100vh" : "90vh",
         },
-      }}
-    >
+      }}>
       {/* Header */}
       <DialogTitle sx={{ pb: 2 }}>
         <Box display="flex" alignItems="center" justifyContent="space-between">
@@ -130,8 +132,7 @@ const PaymentModalImproved: FC<PaymentModalProps> = ({
                 color: "primary.main",
                 display: "flex",
                 alignItems: "center",
-              }}
-            >
+              }}>
               <CreditCard size={responsive.icon.medium.xs} />
             </Box>
             <Typography
@@ -139,8 +140,7 @@ const PaymentModalImproved: FC<PaymentModalProps> = ({
               sx={{
                 fontSize: responsive.typography.h6,
                 fontWeight: 700,
-              }}
-            >
+              }}>
               {title}
             </Typography>
           </Box>
@@ -163,21 +163,18 @@ const PaymentModalImproved: FC<PaymentModalProps> = ({
       {/* Content */}
       <DialogContent sx={{ py: 3 }}>
         <Box display="flex" flexDirection="column" gap={3}>
-          
           {/* Amount Input */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.1 }}
-          >
+            transition={{ delay: 0.1 }}>
             <Box>
               <Box display="flex" alignItems="center" gap={1} mb={1}>
                 <DollarSign size={responsive.icon.small.xs} color="#666" />
-                <Typography 
-                  variant="subtitle2" 
+                <Typography
+                  variant="subtitle2"
                   fontWeight={600}
-                  sx={{ fontSize: responsive.typography.body1 }}
-                >
+                  sx={{ fontSize: responsive.typography.body1 }}>
                   To'lov summasi
                 </Typography>
               </Box>
@@ -185,7 +182,9 @@ const PaymentModalImproved: FC<PaymentModalProps> = ({
                 fullWidth
                 type="number"
                 value={formData.amount}
-                onChange={(e) => setFormData({ ...formData, amount: Number(e.target.value) })}
+                onChange={(e) =>
+                  setFormData({ ...formData, amount: Number(e.target.value) })
+                }
                 placeholder="Summani kiriting..."
                 error={!!errors.amount}
                 helperText={errors.amount}
@@ -196,10 +195,10 @@ const PaymentModalImproved: FC<PaymentModalProps> = ({
                   },
                 }}
                 InputProps={{
-                  sx: { 
+                  sx: {
                     height: responsive.button.height.md,
                     fontSize: responsive.typography.body1,
-                  }
+                  },
                 }}
               />
             </Box>
@@ -209,16 +208,14 @@ const PaymentModalImproved: FC<PaymentModalProps> = ({
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2 }}
-          >
+            transition={{ delay: 0.2 }}>
             <Box>
               <Box display="flex" alignItems="center" gap={1} mb={1}>
                 <Calendar size={responsive.icon.small.xs} color="#666" />
-                <Typography 
-                  variant="subtitle2" 
+                <Typography
+                  variant="subtitle2"
                   fontWeight={600}
-                  sx={{ fontSize: responsive.typography.body1 }}
-                >
+                  sx={{ fontSize: responsive.typography.body1 }}>
                   To'lov sanasi
                 </Typography>
               </Box>
@@ -226,7 +223,9 @@ const PaymentModalImproved: FC<PaymentModalProps> = ({
                 fullWidth
                 type="date"
                 value={formData.paymentDate}
-                onChange={(e) => setFormData({ ...formData, paymentDate: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, paymentDate: e.target.value })
+                }
                 error={!!errors.paymentDate}
                 helperText={errors.paymentDate}
                 sx={{
@@ -235,10 +234,10 @@ const PaymentModalImproved: FC<PaymentModalProps> = ({
                   },
                 }}
                 InputProps={{
-                  sx: { 
+                  sx: {
                     height: responsive.button.height.md,
                     fontSize: responsive.typography.body1,
-                  }
+                  },
                 }}
               />
             </Box>
@@ -248,16 +247,14 @@ const PaymentModalImproved: FC<PaymentModalProps> = ({
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3 }}
-          >
+            transition={{ delay: 0.3 }}>
             <Box>
               <Box display="flex" alignItems="center" gap={1} mb={1}>
                 <FileText size={responsive.icon.small.xs} color="#666" />
-                <Typography 
-                  variant="subtitle2" 
+                <Typography
+                  variant="subtitle2"
                   fontWeight={600}
-                  sx={{ fontSize: responsive.typography.body1 }}
-                >
+                  sx={{ fontSize: responsive.typography.body1 }}>
                   Izoh (ixtiyoriy)
                 </Typography>
               </Box>
@@ -266,7 +263,9 @@ const PaymentModalImproved: FC<PaymentModalProps> = ({
                 multiline
                 rows={isMobile ? 3 : 4}
                 value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, notes: e.target.value })
+                }
                 placeholder="Qo'shimcha izoh..."
                 sx={{
                   "& .MuiOutlinedInput-root": {
@@ -274,22 +273,21 @@ const PaymentModalImproved: FC<PaymentModalProps> = ({
                   },
                 }}
                 InputProps={{
-                  sx: { 
+                  sx: {
                     fontSize: responsive.typography.body1,
-                  }
+                  },
                 }}
               />
             </Box>
           </motion.div>
 
           {/* Info Alert */}
-          <Alert 
-            severity="info" 
-            sx={{ 
+          <Alert
+            severity="info"
+            sx={{
               borderRadius: borderRadius.md,
               fontSize: responsive.typography.body2,
-            }}
-          >
+            }}>
             To'lov ma'lumotlarini diqqat bilan tekshiring
           </Alert>
         </Box>
@@ -302,16 +300,14 @@ const PaymentModalImproved: FC<PaymentModalProps> = ({
           pt: 0,
           gap: { xs: 1, sm: 1.5 },
           flexDirection: { xs: "column", sm: "row" },
-        }}
-      >
+        }}>
         {!isMobile && (
           <SmartButton
             variant="outlined"
             onClick={handleClose}
             disabled={loading}
             icon={<X size={responsive.icon.small.xs} />}
-            tooltipText="Bekor qilish"
-          >
+            tooltipText="Bekor qilish">
             Bekor qilish
           </SmartButton>
         )}
@@ -323,8 +319,7 @@ const PaymentModalImproved: FC<PaymentModalProps> = ({
           loading={loading}
           icon={<CheckCircle size={responsive.icon.small.xs} />}
           tooltipText="Saqlash"
-          fullWidth={isMobile}
-        >
+          fullWidth={isMobile}>
           {loading ? "Saqlanmoqda..." : "Saqlash"}
         </SmartButton>
       </DialogActions>

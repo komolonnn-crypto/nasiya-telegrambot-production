@@ -8,11 +8,13 @@ interface CustomerDialogProps {
   customer: ICustomer | null;
   onClose: () => void;
   isDebtorPage?: boolean;
+  initialContractId?: string;
 }
 const CustomerDialog: React.FC<CustomerDialogProps> = ({
   open,
   customer,
   onClose,
+  initialContractId,
 }) => {
   return (
     <Dialog
@@ -47,7 +49,11 @@ const CustomerDialog: React.FC<CustomerDialogProps> = ({
       <Box sx={{ width: "100%", maxWidth: "100%", p: 0, m: 0 }}>
         <ErrorBoundary>
           {customer && (
-            <CustomerDetails customer={customer} onClose={onClose} />
+            <CustomerDetails
+              customer={customer}
+              onClose={onClose}
+              initialContractId={initialContractId}
+            />
           )}
         </ErrorBoundary>
       </Box>

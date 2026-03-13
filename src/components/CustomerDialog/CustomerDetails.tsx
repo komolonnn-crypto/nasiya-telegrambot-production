@@ -1,20 +1,23 @@
 import { useState, FC } from "react";
 
 import { Box } from "@mui/material";
-import { ICustomer } from "../../types/ICustomer";
-import DialogHeader from "./DialogHeader";
-import DialogTab from "./DialogTab";
+
 import DialogTabCustomerInfo from "./DialogTabCustomerInfo";
 import DialogTabPayment from "./DialogTabPayment";
+import DialogHeader from "./DialogHeader";
+import DialogTab from "./DialogTab";
 import DialogTabNotes from "./DialogTabNotes";
 import DialogTabZapas from "./DialogTabZapas";
 import DialogTabDebts from "./DialogTabDebts";
+
+import { ICustomer } from "../../types/ICustomer";
 
 const CustomerDetails: FC<{
   customer: ICustomer;
   onClose: () => void;
   isAdmin?: boolean;
-}> = ({ customer, onClose }) => {
+  initialContractId?: string;
+}> = ({ customer, onClose, initialContractId }) => {
   const [activeTab, setActiveTab] = useState(0);
 
   return (
@@ -53,7 +56,12 @@ const CustomerDetails: FC<{
             borderRadius: "4px",
           },
         }}>
-        {activeTab === 0 && <DialogTabPayment customerId={customer._id} />}
+        {activeTab === 0 && (
+          <DialogTabPayment
+            customerId={customer._id}
+            initialContractId={initialContractId}
+          />
+        )}
         {activeTab === 1 && <DialogTabCustomerInfo customerId={customer._id} />}
         {activeTab === 2 && <DialogTabNotes customerId={customer._id} />}
         {activeTab === 3 && (
