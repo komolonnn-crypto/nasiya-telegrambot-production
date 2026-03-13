@@ -7,7 +7,9 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
+
 import { ArrowLeft, MoreVertical } from "lucide-react";
+
 import { ICustomer } from "../../types/ICustomer";
 import { useAppDispatch } from "../../hooks/useAppDispatch";
 import { setCustomerDetails } from "../../store/slices/customerSlice";

@@ -1,6 +1,7 @@
 import { FC, useState, useEffect, JSX } from "react";
 
 import { Box, CircularProgress, Typography } from "@mui/material";
+
 import {
   AlertTriangle,
   Clock,
@@ -10,6 +11,7 @@ import {
   Package,
   FileText,
 } from "lucide-react";
+
 import { getDebts } from "../../server/debtor";
 
 interface DebtItem {

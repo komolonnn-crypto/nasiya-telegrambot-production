@@ -1,4 +1,6 @@
 import { FC, useState, useEffect } from "react";
+import { motion } from "framer-motion";
+
 import {
   Box,
   Button,
@@ -15,14 +17,8 @@ import {
   Select,
   MenuItem,
 } from "@mui/material";
-import { motion } from "framer-motion";
-import {
-  DollarSign,
-  CreditCard,
-  FileText,
-  Calendar,
-  // Wallet,
-} from "lucide-react";
+
+import { DollarSign, CreditCard, FileText, Calendar } from "lucide-react";
 
 import { useAppDispatch } from "../../hooks/useAppDispatch";
 import {
@@ -164,11 +160,6 @@ const PaymentModal: FC<PaymentModalProps> = ({
       return;
     }
 
-    // if (!checkIfMethodSet) {
-    //   setError("To'lov usuli tanlanmadi. Iltimos, qayta urinib ko'ring."); // ✅ YANGI: To'lov usuli
-    //   setLoading(false);
-    //   return;
-    // }
     if (!paymentMethod) {
       setError("To'lov usulini tanlang.");
       setLoading(false);

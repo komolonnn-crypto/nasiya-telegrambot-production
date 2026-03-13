@@ -1,3 +1,7 @@
+import { FC, useEffect, useState } from "react";
+import { useSelector } from "react-redux";
+import { RootState } from "../../store";
+
 import {
   Box,
   CircularProgress,
@@ -5,11 +9,10 @@ import {
   Typography,
   IconButton,
 } from "@mui/material";
-import { FC, useEffect, useState } from "react";
+
 import { Send, MessageSquare } from "lucide-react";
+
 import { useAppDispatch } from "../../hooks/useAppDispatch";
-import { useSelector } from "react-redux";
-import { RootState } from "../../store";
 import { addNotes, getNotes } from "../../store/actions/notesActions";
 import { INote } from "../../types/Notes";
 

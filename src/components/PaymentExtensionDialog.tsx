@@ -5,6 +5,7 @@ import React, {
   useMemo,
   useCallback,
 } from "react";
+
 import {
   Dialog,
   DialogTitle,
@@ -14,8 +15,10 @@ import {
   Typography,
   Box,
 } from "@mui/material";
-import { Calendar, Clock } from "lucide-react";
 import { DateRange } from "@mui/icons-material";
+
+import { Calendar, Clock } from "lucide-react";
+
 import "./TimePickerModal.css";
 import { borderRadius, shadows } from "../theme/colors";
 
@@ -47,7 +50,7 @@ const PickerColumn: React.FC<PickerColumnProps> = ({
     if (!columnRef.current) return;
 
     const selectedIndex = items.findIndex(
-      (item) => item.value === selectedValue
+      (item) => item.value === selectedValue,
     );
     const scrollTo = selectedIndex * itemHeight;
     columnRef.current.scrollTo({ top: scrollTo, behavior: "auto" });
@@ -88,16 +91,14 @@ const PickerColumn: React.FC<PickerColumnProps> = ({
       style={{
         height: itemHeight * visibleItemCount,
         scrollSnapType: "y mandatory",
-      }}
-    >
+      }}>
       {items.map((item, index) => (
         <div
           key={index}
           className={`picker-item ${
             item.value === selectedValue ? "selected" : ""
           }`}
-          style={{ height: itemHeight, scrollSnapAlign: "center" }}
-        >
+          style={{ height: itemHeight, scrollSnapAlign: "center" }}>
           {item.label}
         </div>
       ))}
@@ -175,18 +176,17 @@ const TimePickerModal: React.FC<TimePickerModalProps> = ({
   }, [selected]);
 
   return (
-    <Dialog 
-      open={open} 
-      onClose={onClose} 
-      maxWidth="xs" 
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="xs"
       fullWidth
       PaperProps={{
         sx: {
           borderRadius: borderRadius.lg,
           boxShadow: shadows.xl,
-        }
-      }}
-    >
+        },
+      }}>
       <DialogTitle sx={{ pb: 1 }}>
         <Box display="flex" alignItems="center" gap={1.5}>
           <Box
@@ -197,8 +197,7 @@ const TimePickerModal: React.FC<TimePickerModalProps> = ({
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-            }}
-          >
+            }}>
             <Calendar size={24} color="white" />
           </Box>
           <Typography variant="h6" fontWeight={700}>
@@ -207,17 +206,16 @@ const TimePickerModal: React.FC<TimePickerModalProps> = ({
         </Box>
       </DialogTitle>
       <DialogContent>
-        <Box 
-          display="flex" 
-          justifyContent="center" 
-          gap={1.5} 
+        <Box
+          display="flex"
+          justifyContent="center"
+          gap={1.5}
           mt={2}
           sx={{
             p: 2,
             bgcolor: "rgba(79, 172, 254, 0.08)",
             borderRadius: borderRadius.md,
-          }}
-        >
+          }}>
           <PickerColumn
             items={days}
             selectedValue={selected.day}
@@ -231,40 +229,45 @@ const TimePickerModal: React.FC<TimePickerModalProps> = ({
             selectedValue={selected.hour}
             onSelect={handleHourSelect}
           />
-          <Typography variant="h6" sx={{ alignSelf: "center", opacity: 0.5 }}>:</Typography>
+          <Typography variant="h6" sx={{ alignSelf: "center", opacity: 0.5 }}>
+            :
+          </Typography>
           <PickerColumn
             items={minutes}
             selectedValue={selected.minute}
             onSelect={handleMinuteSelect}
           />
         </Box>
-        <Box 
-          sx={{ 
-            mt: 2.5, 
+        <Box
+          sx={{
+            mt: 2.5,
             p: 2,
             bgcolor: "primary.lighter",
             borderRadius: borderRadius.md,
             border: "1px solid",
             borderColor: "primary.light",
-          }}
-        >
-          <Typography 
-            sx={{ 
+          }}>
+          <Typography
+            sx={{
               textAlign: "center",
               fontWeight: 600,
               color: "primary.dark",
               fontSize: "0.95rem",
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <DateRange sx={{ fontSize: '1rem', mr: 0.5 }} />
+            }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}>
+              <DateRange sx={{ fontSize: "1rem", mr: 0.5 }} />
               {formattedLabel}
             </Box>
           </Typography>
         </Box>
       </DialogContent>
       <DialogActions sx={{ p: 3, gap: 1.5 }}>
-        <Button 
+        <Button
           onClick={onClose}
           fullWidth
           variant="outlined"
@@ -272,12 +275,11 @@ const TimePickerModal: React.FC<TimePickerModalProps> = ({
             py: 1.5,
             borderRadius: borderRadius.md,
             fontWeight: 600,
-          }}
-        >
+          }}>
           Bekor qilish
         </Button>
-        <Button 
-          onClick={handleConfirm} 
+        <Button
+          onClick={handleConfirm}
           variant="contained"
           fullWidth
           sx={{
@@ -289,8 +291,7 @@ const TimePickerModal: React.FC<TimePickerModalProps> = ({
             "&:hover": {
               background: "#0284c7",
             },
-          }}
-        >
+          }}>
           Tasdiqlash
         </Button>
       </DialogActions>

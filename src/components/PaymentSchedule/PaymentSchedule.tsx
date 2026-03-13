@@ -1,5 +1,6 @@
 import type { FC } from "react";
 import React, { useState } from "react";
+import { format, addMonths } from "date-fns";
 
 import {
   Box,
@@ -14,7 +15,9 @@ import {
   Typography,
   TableContainer,
 } from "@mui/material";
-import { format, addMonths } from "date-fns";
+
+import { CalendarDays } from "lucide-react";
+
 import {
   MdCheckCircle,
   MdWarning,
@@ -24,10 +27,9 @@ import {
 } from "react-icons/md";
 
 import PaymentModal from "../PaymentModal/PaymentModal";
-import { IPayment } from "../../types/IPayment"; // Import the IPayment interface
+import { IPayment } from "../../types/IPayment";
 import { StatusBadge } from "./StatusBadge";
 import { borderRadius, shadows } from "../../theme/colors";
-import { CalendarDays } from "lucide-react";
 
 interface PaymentScheduleItem {
   month: number;
@@ -86,20 +88,18 @@ const PaymentSchedule: FC<PaymentScheduleProps> = ({
     month: undefined,
   });
 
-
   const generateSchedule = (): PaymentScheduleItem[] => {
     const schedule: PaymentScheduleItem[] = [];
     const start = new Date(startDate);
 
     const initialPaymentRecord = payments.find(
-      (p) => p.paymentType === "initial" && p.isPaid
+      (p) => p.paymentType === "initial" && p.isPaid,
     );
     const isInitialPaid = !!initialPaymentRecord;
 
     if (initialPayment > 0) {
-      const initialDate = initialPaymentDueDate
-        ? new Date(initialPaymentDueDate)
-        : start;
+      const initialDate =
+        initialPaymentDueDate ? new Date(initialPaymentDueDate) : start;
 
       schedule.push({
         month: 0,
@@ -113,12 +113,10 @@ const PaymentSchedule: FC<PaymentScheduleProps> = ({
     const monthlyPayments = payments
       .filter((p) => p.paymentType !== "initial" && p.isPaid)
       .sort((a, b) => {
-        const dateA = a.confirmedAt
-          ? new Date(a.confirmedAt)
-          : new Date(a.date);
-        const dateB = b.confirmedAt
-          ? new Date(b.confirmedAt)
-          : new Date(b.date);
+        const dateA =
+          a.confirmedAt ? new Date(a.confirmedAt) : new Date(a.date);
+        const dateB =
+          b.confirmedAt ? new Date(b.confirmedAt) : new Date(b.date);
 
         // Agar confirmedAt bir xil bo'lsa, date bo'yicha tartiblash
         if (dateA.getTime() === dateB.getTime()) {
@@ -133,7 +131,8 @@ const PaymentSchedule: FC<PaymentScheduleProps> = ({
 
     // ✅ TUZATISH: nextPaymentDate dan boshlab oylar qo'shamiz
     // startDate emas, nextPaymentDate - bu birinchi oylik to'lov sanasi
-    const firstMonthlyPaymentDate = nextPaymentDate ? new Date(nextPaymentDate) : addMonths(start, 1);
+    const firstMonthlyPaymentDate =
+      nextPaymentDate ? new Date(nextPaymentDate) : addMonths(start, 1);
 
     // Oylik to'lovlarni qo'shish
     for (let i = 1; i <= period; i++) {
@@ -162,7 +161,7 @@ const PaymentSchedule: FC<PaymentScheduleProps> = ({
   const handlePayment = (
     amount: number,
     paymentId?: string,
-    month?: number
+    month?: number,
   ) => {
     if (!contractId && !debtorId) {
       alert("Xatolik: Shartnoma ID topilmadi");
@@ -176,11 +175,11 @@ const PaymentSchedule: FC<PaymentScheduleProps> = ({
 
     if (month) {
       const hasPending = payments.some(
-        (p) => p.status === "PENDING" && p.targetMonth === month
+        (p) => p.status === "PENDING" && p.targetMonth === month,
       );
       if (hasPending) {
         alert(
-          "Bu oy uchun to'lov allaqachon kutilmoqda. Kassa tasdiqini kuting."
+          "Bu oy uchun to'lov allaqachon kutilmoqda. Kassa tasdiqini kuting.",
         );
         return;
       }
@@ -227,7 +226,6 @@ const PaymentSchedule: FC<PaymentScheduleProps> = ({
     }, 500); // 500ms kutamiz - backend payment yaratguncha
   };
 
-
   return (
     <>
       <Paper
@@ -238,16 +236,14 @@ const PaymentSchedule: FC<PaymentScheduleProps> = ({
           borderColor: "divider",
           borderRadius: borderRadius.md,
           boxShadow: shadows.sm,
-        }}
-      >
+        }}>
         <Box
           display="flex"
           justifyContent="space-between"
           alignItems="center"
           mb={1.5}
           flexWrap="wrap"
-          gap={1}
-        >
+          gap={1}>
           <Box>
             <Typography variant="subtitle1" fontWeight="600">
               To'lov jadvali
@@ -269,14 +265,12 @@ const PaymentSchedule: FC<PaymentScheduleProps> = ({
                   borderRadius: 1,
                   border: "1px solid",
                   borderColor: "success.main",
-                }}
-              >
+                }}>
                 <MdCheckCircle size={16} color="green" />
                 <Typography
                   variant="caption"
                   fontWeight={600}
-                  color="success.main"
-                >
+                  color="success.main">
                   Oldindan: ${prepaidBalance.toFixed(2)}
                 </Typography>
               </Box>
@@ -295,8 +289,7 @@ const PaymentSchedule: FC<PaymentScheduleProps> = ({
                 py: { xs: 0.75, sm: 1, md: 1 },
                 whiteSpace: "nowrap",
                 minWidth: "auto",
-              }}
-            >
+              }}>
               Barchasini to'lash ({remainingDebt.toLocaleString()} $)
             </Button>
           )}
@@ -321,12 +314,13 @@ const PaymentSchedule: FC<PaymentScheduleProps> = ({
                 backgroundColor: "rgba(0,0,0,0.3)",
               },
             },
-          }}
-        >
+          }}>
           <Table
             size="small"
-            sx={{ minWidth: { xs: "600px", sm: "700px", md: "100%" }, width: "100%" }}
-          >
+            sx={{
+              minWidth: { xs: "600px", sm: "700px", md: "100%" },
+              width: "100%",
+            }}>
             <TableHead>
               <TableRow>
                 <TableCell
@@ -338,8 +332,7 @@ const PaymentSchedule: FC<PaymentScheduleProps> = ({
                     fontSize: { xs: "0.7rem", sm: "0.75rem", md: "0.875rem" },
                     borderBottom: "1px solid rgba(224, 224, 224, 1)",
                     whiteSpace: "nowrap",
-                  }}
-                >
+                  }}>
                   #
                 </TableCell>
                 <TableCell
@@ -351,8 +344,7 @@ const PaymentSchedule: FC<PaymentScheduleProps> = ({
                     fontSize: { xs: "0.7rem", sm: "0.75rem", md: "0.875rem" },
                     borderBottom: "1px solid rgba(224, 224, 224, 1)",
                     whiteSpace: "nowrap",
-                  }}
-                >
+                  }}>
                   Belgilangan
                 </TableCell>
                 <TableCell
@@ -364,8 +356,7 @@ const PaymentSchedule: FC<PaymentScheduleProps> = ({
                     fontSize: { xs: "0.7rem", sm: "0.75rem", md: "0.875rem" },
                     borderBottom: "1px solid rgba(224, 224, 224, 1)",
                     whiteSpace: "nowrap",
-                  }}
-                >
+                  }}>
                   To'langan
                 </TableCell>
                 <TableCell
@@ -378,8 +369,7 @@ const PaymentSchedule: FC<PaymentScheduleProps> = ({
                     fontSize: { xs: "0.7rem", sm: "0.75rem", md: "0.875rem" },
                     borderBottom: "1px solid rgba(224, 224, 224, 1)",
                     whiteSpace: "nowrap",
-                  }}
-                >
+                  }}>
                   Summa
                 </TableCell>
                 <TableCell
@@ -392,8 +382,7 @@ const PaymentSchedule: FC<PaymentScheduleProps> = ({
                     fontSize: { xs: "0.7rem", sm: "0.75rem", md: "0.875rem" },
                     borderBottom: "1px solid rgba(224, 224, 224, 1)",
                     whiteSpace: "nowrap",
-                  }}
-                >
+                  }}>
                   To'landi
                 </TableCell>
                 <TableCell
@@ -406,8 +395,7 @@ const PaymentSchedule: FC<PaymentScheduleProps> = ({
                     fontSize: { xs: "0.7rem", sm: "0.75rem", md: "0.875rem" },
                     borderBottom: "1px solid rgba(224, 224, 224, 1)",
                     whiteSpace: "nowrap",
-                  }}
-                >
+                  }}>
                   Holat
                 </TableCell>
                 {!readOnly && (contractId || debtorId) && (
@@ -421,8 +409,7 @@ const PaymentSchedule: FC<PaymentScheduleProps> = ({
                       fontSize: { xs: "0.7rem", sm: "0.75rem", md: "0.875rem" },
                       borderBottom: "1px solid rgba(224, 224, 224, 1)",
                       whiteSpace: "nowrap",
-                    }}
-                  >
+                    }}>
                     Amal
                   </TableCell>
                 )}
@@ -433,12 +420,10 @@ const PaymentSchedule: FC<PaymentScheduleProps> = ({
                 let previousExcess = 0;
 
                 const sortedPayments = [...payments].sort((a, b) => {
-                  const dateA = a.confirmedAt
-                    ? new Date(a.confirmedAt)
-                    : new Date(a.date);
-                  const dateB = b.confirmedAt
-                    ? new Date(b.confirmedAt)
-                    : new Date(b.date);
+                  const dateA =
+                    a.confirmedAt ? new Date(a.confirmedAt) : new Date(a.date);
+                  const dateB =
+                    b.confirmedAt ? new Date(b.confirmedAt) : new Date(b.date);
 
                   if (dateA.getTime() === dateB.getTime()) {
                     return (
@@ -451,7 +436,7 @@ const PaymentSchedule: FC<PaymentScheduleProps> = ({
                 });
 
                 const monthlyPayments = sortedPayments.filter(
-                  (p) => p.paymentType !== "initial" && p.isPaid
+                  (p) => p.paymentType !== "initial" && p.isPaid,
                 );
 
                 return schedule.map((item, _index) => {
@@ -469,7 +454,7 @@ const PaymentSchedule: FC<PaymentScheduleProps> = ({
                   if (item.isInitial) {
                     // Boshlang'ich to'lov uchun
                     actualPayment = payments.find(
-                      (p) => p.paymentType === "initial" && p.isPaid
+                      (p) => p.paymentType === "initial" && p.isPaid,
                     );
                   } else {
                     actualPayment = monthlyPayments[item.month - 1];
@@ -553,15 +538,16 @@ const PaymentSchedule: FC<PaymentScheduleProps> = ({
                     const paidDate = new Date(actualPayment.date as string);
                     delayDays = Math.floor(
                       (paidDate.getTime() - scheduledDate.getTime()) /
-                        (1000 * 60 * 60 * 24)
+                        (1000 * 60 * 60 * 24),
                     );
                   }
 
                   const fromPreviousMonth = previousExcess; // Oldingi oydan kelgan
                   const monthlyPaymentAmount = item.amount; // Oylik to'lov
 
-                  const needToPay = actualPayment?.expectedAmount
-                    ? actualPayment.expectedAmount
+                  const needToPay =
+                    actualPayment?.expectedAmount ?
+                      actualPayment.expectedAmount
                     : Math.max(0, monthlyPaymentAmount - fromPreviousMonth); // To'lash kerak
 
                   const actuallyPaid = actualPaidAmount; // To'langan
@@ -598,32 +584,28 @@ const PaymentSchedule: FC<PaymentScheduleProps> = ({
                     <React.Fragment key={`payment-${item.month}`}>
                       <TableRow
                         sx={{
-                          bgcolor: item.isPaid
-                            ? "success.lighter"
-                            : isPast && !item.isPaid
-                            ? "error.lighter"
+                          bgcolor:
+                            item.isPaid ? "success.lighter"
+                            : isPast && !item.isPaid ? "error.lighter"
                             : "inherit",
                           borderBottom: "1px solid rgba(224, 224, 224, 1)",
                           "&:hover": {
-                            bgcolor: item.isPaid
-                              ? "success.light"
-                              : isPast && !item.isPaid
-                              ? "error.light"
+                            bgcolor:
+                              item.isPaid ? "success.light"
+                              : isPast && !item.isPaid ? "error.light"
                               : "grey.100",
                           },
                           "&:last-child": {
                             borderBottom: "1px solid rgba(224, 224, 224, 1)",
                           },
-                        }}
-                      >
+                        }}>
                         {/* # */}
                         <TableCell
                           sx={{
                             py: { xs: 0.75, sm: 1 },
                             px: { xs: 1, sm: 1.5, md: 2 },
                             borderBottom: "1px solid rgba(224, 224, 224, 1)",
-                          }}
-                        >
+                          }}>
                           <Box display="flex" alignItems="center" gap={0.5}>
                             {isPast && !item.isPaid && (
                               <MdWarning size={14} color="#d32f2f" />
@@ -631,19 +613,23 @@ const PaymentSchedule: FC<PaymentScheduleProps> = ({
                             <Typography
                               variant="body2"
                               fontWeight="600"
-                              fontSize={{ xs: "0.75rem", sm: "0.8rem", md: "0.875rem" }}
+                              fontSize={{
+                                xs: "0.75rem",
+                                sm: "0.8rem",
+                                md: "0.875rem",
+                              }}
                               color={
-                                isPast && !item.isPaid
-                                  ? "error.main"
-                                  : "inherit"
-                              }
-                            >
+                                isPast && !item.isPaid ?
+                                  "error.main"
+                                : "inherit"
+                              }>
                               {item.isInitial ? "0" : item.month}
                               {isPast && !item.isPaid && (
                                 <Box
                                   component="span"
-                                  sx={{ display: { xs: "none", md: "inline" } }}
-                                >
+                                  sx={{
+                                    display: { xs: "none", md: "inline" },
+                                  }}>
                                   {" (Kechikkan)"}
                                 </Box>
                               )}
@@ -657,19 +643,23 @@ const PaymentSchedule: FC<PaymentScheduleProps> = ({
                             py: { xs: 0.75, sm: 1 },
                             px: { xs: 1, sm: 1.5, md: 2 },
                             borderBottom: "1px solid rgba(224, 224, 224, 1)",
-                          }}
-                        >
+                          }}>
                           <Typography
                             variant="body2"
-                            fontSize={{ xs: "0.7rem", sm: "0.75rem", md: "0.875rem" }}
-                          >
+                            fontSize={{
+                              xs: "0.7rem",
+                              sm: "0.75rem",
+                              md: "0.875rem",
+                            }}>
                             {(() => {
                               try {
-                                if (!item.date) return '-';
+                                if (!item.date) return "-";
                                 const d = new Date(item.date);
-                                return isNaN(d.getTime()) ? '-' : format(d, "dd.MM");
+                                return isNaN(d.getTime()) ? "-" : (
+                                    format(d, "dd.MM")
+                                  );
                               } catch {
-                                return '-';
+                                return "-";
                               }
                             })()}
                           </Typography>
@@ -681,46 +671,51 @@ const PaymentSchedule: FC<PaymentScheduleProps> = ({
                             py: { xs: 0.75, sm: 1 },
                             px: { xs: 1, sm: 1.5, md: 2 },
                             borderBottom: "1px solid rgba(224, 224, 224, 1)",
-                          }}
-                        >
-                          {item.isPaid ? (
+                          }}>
+                          {item.isPaid ?
                             <Typography
                               variant="body2"
-                              fontSize={{ xs: "0.7rem", sm: "0.75rem", md: "0.875rem" }}
+                              fontSize={{
+                                xs: "0.7rem",
+                                sm: "0.75rem",
+                                md: "0.875rem",
+                              }}
                               color={
                                 delayDays > 0 ? "error.main" : "success.main"
+                              }>
+                              {actualPayment && actualPayment.confirmedAt ?
+                                format(
+                                  new Date(actualPayment.confirmedAt as string),
+                                  "dd.MM",
+                                )
+                              : actualPayment ?
+                                format(
+                                  new Date(actualPayment.date as string),
+                                  "dd.MM",
+                                )
+                              : (() => {
+                                  try {
+                                    if (!item.date) return "-";
+                                    const d = new Date(item.date);
+                                    return isNaN(d.getTime()) ? "-" : (
+                                        format(d, "dd.MM")
+                                      );
+                                  } catch {
+                                    return "-";
+                                  }
+                                })()
                               }
-                            >
-                              {actualPayment && actualPayment.confirmedAt
-                                ? format(
-                                    new Date(
-                                      actualPayment.confirmedAt as string
-                                    ),
-                                    "dd.MM"
-                                  )
-                                : actualPayment
-                                ? format(
-                                    new Date(actualPayment.date as string),
-                                    "dd.MM"
-                                  )
-                                : (() => {
-                                    try {
-                                      if (!item.date) return '-';
-                                      const d = new Date(item.date);
-                                      return isNaN(d.getTime()) ? '-' : format(d, "dd.MM");
-                                    } catch {
-                                      return '-';
-                                    }
-                                  })()}
                               {!item.isInitial &&
                                 delayDays > 0 &&
                                 ` (+${delayDays})`}
                             </Typography>
-                          ) : (
-                            <Typography variant="body2" color="text.disabled" fontSize={{ xs: "0.7rem", sm: "0.875rem" }}>
+                          : <Typography
+                              variant="body2"
+                              color="text.disabled"
+                              fontSize={{ xs: "0.7rem", sm: "0.875rem" }}>
                               —
                             </Typography>
-                          )}
+                          }
                         </TableCell>
 
                         {/* Summa - Oylik to'lov (har doim bir xil) */}
@@ -730,13 +725,15 @@ const PaymentSchedule: FC<PaymentScheduleProps> = ({
                             py: { xs: 0.75, sm: 1 },
                             px: { xs: 1, sm: 1.5, md: 2 },
                             borderBottom: "1px solid rgba(224, 224, 224, 1)",
-                          }}
-                        >
+                          }}>
                           <Typography
                             variant="body2"
                             fontWeight="medium"
-                            fontSize={{ xs: "0.7rem", sm: "0.75rem", md: "0.875rem" }}
-                          >
+                            fontSize={{
+                              xs: "0.7rem",
+                              sm: "0.75rem",
+                              md: "0.875rem",
+                            }}>
                             {item.amount.toLocaleString()}
                           </Typography>
                         </TableCell>
@@ -748,21 +745,18 @@ const PaymentSchedule: FC<PaymentScheduleProps> = ({
                             py: { xs: 0.75, sm: 1 },
                             px: { xs: 1, sm: 1.5, md: 2 },
                             borderBottom: "1px solid rgba(224, 224, 224, 1)",
-                          }}
-                        >
-                          {item.isPaid ? (
+                          }}>
+                          {item.isPaid ?
                             <Box>
                               <Box
                                 display="flex"
                                 alignItems="center"
                                 gap={0.5}
-                                justifyContent="flex-end"
-                              >
+                                justifyContent="flex-end">
                                 <Typography
                                   variant="body2"
                                   fontWeight="medium"
-                                  color="success.main"
-                                >
+                                  color="success.main">
                                   {actualPaidAmount.toLocaleString()} $
                                 </Typography>
                                 {actualPayment?.status && (
@@ -783,8 +777,7 @@ const PaymentSchedule: FC<PaymentScheduleProps> = ({
                                       py: 0.25,
                                       bgcolor: "error.lighter",
                                       borderRadius: 1,
-                                    }}
-                                  >
+                                    }}>
                                     <MdArrowDownward
                                       size={14}
                                       color="#d32f2f"
@@ -792,8 +785,7 @@ const PaymentSchedule: FC<PaymentScheduleProps> = ({
                                     <Typography
                                       variant="caption"
                                       fontWeight="bold"
-                                      color="error.main"
-                                    >
+                                      color="error.main">
                                       {remainingAmountToShow.toLocaleString()} $
                                       kam
                                     </Typography>
@@ -809,19 +801,17 @@ const PaymentSchedule: FC<PaymentScheduleProps> = ({
                                         py: 0.25,
                                         bgcolor: "warning.lighter",
                                         borderRadius: 1,
-                                      }}
-                                    >
+                                      }}>
                                       <Typography
                                         variant="caption"
                                         fontWeight="600"
-                                        color="warning.dark"
-                                      >
+                                        color="warning.dark">
                                         <CalendarDays />{" "}
                                         {format(
                                           new Date(
-                                            actualPayment.nextPaymentDate
+                                            actualPayment.nextPaymentDate,
                                           ),
-                                          "dd.MM.yyyy"
+                                          "dd.MM.yyyy",
                                         )}
                                       </Typography>
                                     </Box>
@@ -839,25 +829,22 @@ const PaymentSchedule: FC<PaymentScheduleProps> = ({
                                     py: 0.25,
                                     bgcolor: "info.lighter",
                                     borderRadius: 1,
-                                  }}
-                                >
+                                  }}>
                                   <MdArrowUpward size={14} color="#0288d1" />
                                   <Typography
                                     variant="caption"
                                     fontWeight="bold"
-                                    color="info.main"
-                                  >
+                                    color="info.main">
                                     {actualPayment.excessAmount.toLocaleString()}{" "}
                                     $ ortiqcha
                                   </Typography>
                                 </Box>
                               )}
                             </Box>
-                          ) : (
-                            <Typography variant="body2" color="text.disabled">
+                          : <Typography variant="body2" color="text.disabled">
                               —
                             </Typography>
-                          )}
+                          }
                         </TableCell>
 
                         {/* Holat */}
@@ -867,22 +854,19 @@ const PaymentSchedule: FC<PaymentScheduleProps> = ({
                             py: 1,
                             px: { xs: 0.5, sm: 1, md: 2 },
                             borderBottom: "1px solid rgba(224, 224, 224, 1)",
-                          }}
-                        >
+                          }}>
                           <Chip
                             label={
-                              item.isPaid
-                                ? "Paid"
-                                : isPast
-                                ? "Kechikkan"
-                                : "Kutilmoqda"
+                              item.isPaid ? "Paid"
+                              : isPast ?
+                                "Kechikkan"
+                              : "Kutilmoqda"
                             }
                             color={
-                              item.isPaid
-                                ? "success"
-                                : isPast
-                                ? "error"
-                                : "default"
+                              item.isPaid ? "success"
+                              : isPast ?
+                                "error"
+                              : "default"
                             }
                             size="small"
                             sx={{
@@ -901,16 +885,14 @@ const PaymentSchedule: FC<PaymentScheduleProps> = ({
                               py: 1,
                               px: { xs: 0.5, sm: 1, md: 2 },
                               borderBottom: "1px solid rgba(224, 224, 224, 1)",
-                            }}
-                          >
-                            {finalPendingCheck ? (
+                            }}>
+                            {finalPendingCheck ?
                               <Typography
                                 variant="caption"
-                                color="text.secondary"
-                              >
+                                color="text.secondary">
                                 —
                               </Typography>
-                            ) : !item.isPaid ? (
+                            : !item.isPaid ?
                               <Button
                                 size="small"
                                 variant="contained"
@@ -919,7 +901,7 @@ const PaymentSchedule: FC<PaymentScheduleProps> = ({
                                   handlePayment(
                                     item.amount,
                                     undefined,
-                                    item.month
+                                    item.month,
                                   )
                                 }
                                 startIcon={<MdPayment size={16} />}
@@ -933,13 +915,14 @@ const PaymentSchedule: FC<PaymentScheduleProps> = ({
                                   py: { xs: 0.75, sm: 1, md: 1 },
                                   whiteSpace: "nowrap",
                                   minWidth: { xs: "80px", md: "120px" },
-                                }}
-                              >
+                                }}>
                                 To'lash
                               </Button>
-                            ) : hasShortage &&
+                            : (
+                              hasShortage &&
                               remainingAmountToShow > 0.01 &&
-                              !finalPendingCheck ? (
+                              !finalPendingCheck
+                            ) ?
                               <Button
                                 size="small"
                                 variant="contained"
@@ -947,14 +930,14 @@ const PaymentSchedule: FC<PaymentScheduleProps> = ({
                                 onClick={() => {
                                   if (!actualPayment?._id) {
                                     alert(
-                                      "Xatolik: To'lov ID topilmadi. Sahifani yangilang va qayta urinib ko'ring."
+                                      "Xatolik: To'lov ID topilmadi. Sahifani yangilang va qayta urinib ko'ring.",
                                     );
                                     return;
                                   }
 
                                   handlePayment(
                                     remainingAmountToShow,
-                                    actualPayment._id
+                                    actualPayment._id,
                                   );
                                 }}
                                 startIcon={<MdWarning size={16} />}
@@ -974,12 +957,10 @@ const PaymentSchedule: FC<PaymentScheduleProps> = ({
                                   whiteSpace: "nowrap",
                                   minWidth: { xs: "auto", md: "120px" },
                                   maxHeight: { md: "32px" },
-                                }}
-                              >
+                                }}>
                                 {`Qarz (${remainingAmountToShow.toLocaleString()} $)`}
                               </Button>
-                            ) : (
-                              <Chip
+                            : <Chip
                                 label="To'langan"
                                 color="success"
                                 size="small"
@@ -989,7 +970,7 @@ const PaymentSchedule: FC<PaymentScheduleProps> = ({
                                   height: { xs: 24, sm: 32 },
                                 }}
                               />
-                            )}
+                            }
                           </TableCell>
                         )}
                       </TableRow>
@@ -1013,8 +994,7 @@ const PaymentSchedule: FC<PaymentScheduleProps> = ({
             alignItems: "center",
             flexWrap: "wrap",
             gap: 2,
-          }}
-        >
+          }}>
           <Box display="flex" gap={3} flexWrap="wrap">
             <Box>
               <Typography variant="caption" color="text.secondary">
@@ -1072,7 +1052,6 @@ const PaymentSchedule: FC<PaymentScheduleProps> = ({
           targetMonth={paymentModal.month}
         />
       )}
-
     </>
   );
 };

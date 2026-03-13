@@ -1,6 +1,9 @@
 import { useEffect } from "react";
-
 import { useSelector } from "react-redux";
+
+import { formatDistanceToNow } from "date-fns";
+import { uz } from "date-fns/locale";
+
 import { Box, Typography, Button, IconButton } from "@mui/material";
 
 import {
@@ -20,16 +23,15 @@ import {
 } from "lucide-react";
 
 import { useAlert } from "../components/AlertSystem";
-import { RootState } from "../store";
 import { useAppDispatch } from "../hooks/useAppDispatch";
+
 import {
   getNotifications,
   markNotificationAsRead,
   markAllNotificationsAsRead,
   deleteAllNotifications,
 } from "../store/actions/notificationActions";
-import { formatDistanceToNow } from "date-fns";
-import { uz } from "date-fns/locale";
+import { RootState } from "../store";
 
 interface TabPageProps {
   activeTabIndex: number;

@@ -1,16 +1,18 @@
 import { useState, useEffect } from "react";
-
 import { useNavigate, useLocation } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
+import { motion } from "framer-motion";
+
+import type { Swiper as SwiperType } from "swiper";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Keyboard } from "swiper/modules";
-import type { Swiper as SwiperType } from "swiper";
 import "swiper/swiper-bundle.css";
+
 import { Box, Badge, Typography } from "@mui/material";
+
 import { tabRoutes } from "./tabRoutes";
-import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../store";
 import { getUnreadCount } from "../store/actions/notificationActions";
-import { motion } from "framer-motion";
 
 // Floating pill height (~70px) + bottom margin (20px) + safe area buffer
 const BOTTOM_OFFSET = 100;
